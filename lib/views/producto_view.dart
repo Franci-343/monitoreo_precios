@@ -3,6 +3,8 @@ import 'package:monitoreo_precios/models/producto_model.dart';
 import 'package:monitoreo_precios/models/mercado_model.dart';
 import 'package:monitoreo_precios/services/producto_service.dart';
 import 'package:monitoreo_precios/services/precio_service.dart';
+import 'package:monitoreo_precios/services/favorito_service.dart';
+import 'package:monitoreo_precios/models/favorito_model.dart';
 import 'package:monitoreo_precios/views/comparador_view.dart';
 
 class ProductoView extends StatefulWidget {
@@ -17,6 +19,10 @@ class _ProductoViewState extends State<ProductoView> {
   String _selectedCategory = '';
   Mercado? _selectedMarket;
 
+  // Simular usuario autenticado (temporal)
+  static const int _currentUserId = 1;
+  Set<int> _favoriteProductIds = {};
+
   List<Producto> _productos = [];
   List<String> _categorias = [];
   List<Mercado> _mercados = [];
@@ -26,6 +32,7 @@ class _ProductoViewState extends State<ProductoView> {
   void initState() {
     super.initState();
     _loadAll();
+    _loadFavorites();
   }
 
   Future<void> _loadAll() async {
@@ -38,6 +45,13 @@ class _ProductoViewState extends State<ProductoView> {
       _mercados = markets;
       _productos = prods;
       _loading = false;
+    });
+  }
+
+  Future<void> _loadFavorites() async {
+    final favs = await FavoritoService.getFavoritesForUser(_currentUserId);
+    setState(() {
+      _favoriteProductIds = favs.map((f) => f.productoId).toSet();
     });
   }
 
@@ -140,8 +154,17 @@ class _ProductoViewState extends State<ProductoView> {
                           itemCount: _productos.length,
                           itemBuilder: (context, index) {
                             final p = _productos[index];
+                            final isFav = _favoriteProductIds.contains(p.id);
                             return Card(
                               child: ListTile(
+                                leading: IconButton(
+                                  icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.red : null),
+                                  onPressed: () async {
+                                    await FavoritoService.toggleFavorite(_currentUserId, p.id);
+                                    await _loadFavorites();
+                                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isFav ? 'Eliminado de favoritos' : 'Agregado a favoritos')));
+                                  },
+                                ),
                                 title: Text(p.nombre),
                                 subtitle: Text(p.categoria),
                                 trailing: ElevatedButton(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:monitoreo_precios/views/register_view.dart';
 import 'package:monitoreo_precios/views/producto_view.dart';
+import 'package:monitoreo_precios/views/favoritos_view.dart';
+import 'package:monitoreo_precios/views/reporte_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({Key? key}) : super(key: key);
@@ -169,6 +171,20 @@ class HomeAfterLogin extends StatelessWidget {
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProductoView()));
               },
               child: const Text('Consultar productos'),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FavoritosView()));
+              },
+              child: const Text('Mis favoritos'),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReporteView()));
+              },
+              child: const Text('Reportes'),
             ),
             const SizedBox(height: 8),
             TextButton(
