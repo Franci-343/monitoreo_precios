@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:monitoreo_precios/views/register_view.dart';
+import 'package:monitoreo_precios/views/producto_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({Key? key}) : super(key: key);
@@ -157,8 +158,27 @@ class HomeAfterLogin extends StatelessWidget {
         title: const Text('Inicio'),
         centerTitle: true,
       ),
-      body: const Center(
-        child: Text('Bienvenido — inicio simulado', style: TextStyle(fontSize: 18)),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Bienvenido — inicio simulado', style: TextStyle(fontSize: 18)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProductoView()));
+              },
+              child: const Text('Consultar productos'),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LoginView()));
+              },
+              child: const Text('Cerrar sesión'),
+            )
+          ],
+        ),
       ),
     );
   }
