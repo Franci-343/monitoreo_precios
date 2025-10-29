@@ -1,89 +1,244 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:monitoreo_precios/views/login_view.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MonitoreoPreciosApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MonitoreoPreciosApp extends StatelessWidget {
+  const MonitoreoPreciosApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        appBarTheme: const AppBarTheme(elevation: 2, centerTitle: true),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            elevation: 2,
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(elevation: 4),
-      ),
+      title: 'Monitoreo de Precios - La Paz',
+      debugShowCheckedModeBanner: false,
+      theme: _buildWeb3Theme(),
       home: const LoginView(),
     );
   }
-}
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  ThemeData _buildWeb3Theme() {
+    // Colores Web3 modernos
+    const Color primaryGradientStart = Color(0xFF6366F1); // Indigo vibrante
+    const Color primaryGradientEnd = Color(0xFF8B5CF6);   // Púrpura
+    const Color secondaryGradientStart = Color(0xFF06B6D4); // Cyan
+    const Color secondaryGradientEnd = Color(0xFF3B82F6);   // Azul
+    const Color backgroundDark = Color(0xFF0F0F23);        // Fondo oscuro
+    const Color surfaceDark = Color(0xFF1A1A2E);          // Superficie oscura
+    const Color cardGlass = Color(0xFF16213E);            // Cristal oscuro
+    const Color accentNeon = Color(0xFF00FFF0);           // Neon cyan
+    const Color textPrimary = Color(0xFFFFFFFF);          // Blanco
+    const Color textSecondary = Color(0xFFB4B4B8);        // Gris claro
 
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
 
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-
-    return Scaffold(
-      appBar: AppBar(
-
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-
-        title: Text(widget.title),
+      // Esquema de colores Web3
+      colorScheme: const ColorScheme.dark(
+        primary: primaryGradientStart,
+        secondary: secondaryGradientStart,
+        surface: surfaceDark,
+        background: backgroundDark,
+        onPrimary: textPrimary,
+        onSecondary: textPrimary,
+        onSurface: textPrimary,
+        onBackground: textPrimary,
+        tertiary: accentNeon,
       ),
-      body: Center(
 
-        child: Column(
+      // Configuración de sistema
+      visualDensity: VisualDensity.adaptivePlatformDensity,
 
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+      // AppBar con gradiente y glassmorphism
+      appBarTheme: const AppBarTheme(
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        foregroundColor: textPrimary,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+        ),
+        titleTextStyle: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
+          letterSpacing: 0.5,
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+
+      // Botones con gradientes Web3
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          foregroundColor: textPrimary,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ).copyWith(
+          backgroundColor: MaterialStateProperty.resolveWith((states) {
+            if (states.contains(MaterialState.pressed)) {
+              return primaryGradientEnd.withOpacity(0.8);
+            }
+            return null;
+          }),
+        ),
+      ),
+
+      // Inputs con estilo Web3
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: cardGlass.withOpacity(0.3),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: primaryGradientStart.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: primaryGradientStart.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: accentNeon,
+            width: 2,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
+        hintStyle: TextStyle(
+          color: textSecondary.withOpacity(0.7),
+          fontSize: 16,
+        ),
+        labelStyle: const TextStyle(
+          color: textSecondary,
+          fontSize: 16,
+        ),
+      ),
+
+      // Cards con glassmorphism
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: cardGlass.withOpacity(0.2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: primaryGradientStart.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        margin: const EdgeInsets.all(8),
+      ),
+
+      // FloatingActionButton con gradiente
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        elevation: 8,
+        backgroundColor: primaryGradientStart,
+        foregroundColor: textPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
+      ),
+
+      // Texto con tipografía Web3
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.w800,
+          color: textPrimary,
+          letterSpacing: -0.5,
+        ),
+        displayMedium: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
+          letterSpacing: -0.25,
+        ),
+        headlineLarge: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
+          letterSpacing: 0,
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: textPrimary,
+          letterSpacing: 0.15,
+        ),
+        titleLarge: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: textPrimary,
+          letterSpacing: 0.15,
+        ),
+        titleMedium: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: textPrimary,
+          letterSpacing: 0.15,
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: textPrimary,
+          letterSpacing: 0.5,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: textSecondary,
+          letterSpacing: 0.25,
+        ),
+        labelLarge: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: textPrimary,
+          letterSpacing: 1.25,
+        ),
+      ),
+
+      // Bottom Navigation con glassmorphism
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: cardGlass.withOpacity(0.2),
+        elevation: 0,
+        selectedItemColor: accentNeon,
+        unselectedItemColor: textSecondary,
+        type: BottomNavigationBarType.fixed,
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w400,
+          fontSize: 12,
+        ),
+      ),
+
+      // Dividers con gradiente sutil
+      dividerTheme: DividerThemeData(
+        color: primaryGradientStart.withOpacity(0.2),
+        thickness: 1,
+        space: 20,
+      ),
     );
   }
 }

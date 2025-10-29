@@ -4,6 +4,7 @@ import 'package:monitoreo_precios/views/producto_view.dart';
 import 'package:monitoreo_precios/views/favoritos_view.dart';
 import 'package:monitoreo_precios/views/reporte_view.dart';
 import 'package:monitoreo_precios/views/perfil_view.dart';
+import 'package:monitoreo_precios/widgets/web3_widgets.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({Key? key}) : super(key: key);
@@ -56,109 +57,184 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Iniciar sesión'),
-        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Header dentro de la tarjeta para dar identidad y guía al usuario
-                      CircleAvatar(
-                        radius: 28,
-                        backgroundColor: Color.fromRGBO(
-                          Theme.of(context).colorScheme.primary.red,
-                          Theme.of(context).colorScheme.primary.green,
-                          Theme.of(context).colorScheme.primary.blue,
-                          0.12,
+      body: Web3GradientBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Logo y título con efecto neón
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        child: Icon(Icons.storefront, color: Theme.of(context).colorScheme.primary, size: 32),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF6366F1).withOpacity(0.4),
+                            blurRadius: 30,
+                            spreadRadius: 5,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      Text('Monitoreo de Precios', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 6),
-                      const Text('Accede para guardar favoritos, reportar precios y comparar', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
-                      const SizedBox(height: 16),
+                      child: const Icon(
+                        Icons.storefront,
+                        size: 50,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-                      // Form fields
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Correo electrónico',
-                          prefixIcon: Icon(Icons.email),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Ingrese su correo electrónico';
-                          }
-                          if (!value.contains('@')) return 'Ingrese un correo válido';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Contraseña',
-                          prefixIcon: Icon(Icons.lock),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Ingrese su contraseña';
-                          if (value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _loading ? null : _submit,
-                          child: _loading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                )
-                              : const Text('Ingresar'),
+                    // Título principal
+                    ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [Color(0xFF00FFF0), Color(0xFF6366F1)],
+                      ).createShader(bounds),
+                      child: const Text(
+                        'Monitoreo de Precios',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: _loading
-                            ? null
-                            : () async {
-                                // Abrir pantalla de registro y obtener el email creado
-                                final result = await Navigator.of(context).push<String?>(
-                                  MaterialPageRoute(builder: (_) => const RegisterView()),
-                                );
-                                if (result != null && result.isNotEmpty) {
-                                  // Prellenar el campo email con el correo devuelto
-                                  _emailController.text = result;
-                                  // Opcional: mostrar feedback
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Registro exitoso. Por favor ingresa tu contraseña.')),
-                                    );
-                                  }
+                    ),
+                    const SizedBox(height: 8),
+
+                    Text(
+                      'La Paz, Bolivia',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white.withOpacity(0.7),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    Text(
+                      'Accede para guardar favoritos, reportar precios y comparar',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+
+                    // Formulario con glassmorphism
+                    Web3GlassCard(
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            Web3NeonTextField(
+                              hintText: 'Correo electrónico',
+                              labelText: 'Email',
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              prefixIcon: Icons.email,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Ingrese su correo electrónico';
                                 }
+                                if (!value.contains('@')) return 'Ingrese un correo válido';
+                                return null;
                               },
-                        child: const Text('¿No tienes cuenta? Registrarse'),
+                            ),
+                            const SizedBox(height: 20),
+
+                            Web3NeonTextField(
+                              hintText: 'Contraseña',
+                              labelText: 'Password',
+                              controller: _passwordController,
+                              obscureText: true,
+                              prefixIcon: Icons.lock,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) return 'Ingrese su contraseña';
+                                if (value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 32),
+
+                            Web3GradientButton(
+                              text: 'Ingresar',
+                              onPressed: _submit,
+                              isLoading: _loading,
+                              icon: Icons.login,
+                              width: double.infinity,
+                            ),
+                            const SizedBox(height: 16),
+
+                            TextButton(
+                              onPressed: _loading
+                                  ? null
+                                  : () async {
+                                      final result = await Navigator.of(context).push<String?>(
+                                        MaterialPageRoute(builder: (_) => const RegisterView()),
+                                      );
+                                      if (result != null && result.isNotEmpty) {
+                                        _emailController.text = result;
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: const Text('Registro exitoso. Por favor ingresa tu contraseña.'),
+                                              backgroundColor: const Color(0xFF00FFF0).withOpacity(0.8),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                              child: Text(
+                                '¿No tienes cuenta? Registrarse',
+                                style: TextStyle(
+                                  color: const Color(0xFF00FFF0),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Indicador de versión con estilo Web3
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF16213E).withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF6366F1).withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        'v1.0.0 • Sistema de calidad ISO/IEC 9126',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.5),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -175,90 +251,226 @@ class HomeAfterLogin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Monitoreo de Precios'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PerfilView()),
+            ),
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('¡Bienvenido!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            const Text('Consulta y compara precios en mercados de La Paz', style: TextStyle(fontSize: 14, color: Colors.grey)),
-            const SizedBox(height: 18),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                children: [
-                  _HomeCard(
-                    icon: Icons.search,
-                    label: 'Consultar productos',
-                    color: Colors.deepPurple,
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProductoView())),
+      body: Web3GradientBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+
+                // Saludo con estilo Web3
+                ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [Color(0xFF00FFF0), Color(0xFF6366F1)],
+                  ).createShader(bounds),
+                  child: const Text(
+                    '¡Bienvenido!',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
                   ),
-                  _HomeCard(
-                    icon: Icons.favorite,
-                    label: 'Mis favoritos',
-                    color: Colors.redAccent,
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FavoritosView())),
+                ),
+                const SizedBox(height: 8),
+
+                Text(
+                  'Consulta y compara precios en mercados de La Paz',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white.withOpacity(0.7),
                   ),
-                  _HomeCard(
-                    icon: Icons.assignment,
-                    label: 'Reportes',
-                    color: Colors.teal,
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReporteView())),
+                ),
+                const SizedBox(height: 32),
+
+                Expanded(
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    children: [
+                      _Web3HomeCard(
+                        icon: Icons.search,
+                        label: 'Consultar\nProductos',
+                        gradientColors: const [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ProductoView()),
+                        ),
+                      ),
+                      _Web3HomeCard(
+                        icon: Icons.favorite,
+                        label: 'Mis\nFavoritos',
+                        gradientColors: const [Color(0xFFEC4899), Color(0xFFF97316)],
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const FavoritosView()),
+                        ),
+                      ),
+                      _Web3HomeCard(
+                        icon: Icons.analytics,
+                        label: 'Reportes y\nTendencias',
+                        gradientColors: const [Color(0xFF06B6D4), Color(0xFF3B82F6)],
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ReporteView()),
+                        ),
+                      ),
+                      _Web3HomeCard(
+                        icon: Icons.person,
+                        label: 'Mi\nPerfil',
+                        gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const PerfilView()),
+                        ),
+                      ),
+                    ],
                   ),
-                  _HomeCard(
-                    icon: Icons.person,
-                    label: 'Perfil',
-                    color: Colors.indigo,
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PerfilView())),
+                ),
+
+                // Footer con información adicional
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF16213E).withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
-                ],
-              ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF00FFF0), Color(0xFF06B6D4)],
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.info_outline,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Sistema certificado ISO/IEC 9126',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              'Calidad garantizada en funcionalidad, fiabilidad y usabilidad',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LoginView())),
-                child: const Text('Cerrar sesión'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _HomeCard extends StatelessWidget {
+class _Web3HomeCard extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color color;
+  final List<Color> gradientColors;
   final VoidCallback onTap;
 
-  const _HomeCard({Key? key, required this.icon, required this.label, required this.color, required this.onTap}) : super(key: key);
+  const _Web3HomeCard({
+    required this.icon,
+    required this.label,
+    required this.gradientColors,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: gradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: gradientColors.first.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF16213E).withOpacity(0.2),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircleAvatar(
-                backgroundColor: Color.fromRGBO(color.red, color.green, color.blue, 0.12),
-                child: Icon(icon, color: color),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  icon,
+                  size: 32,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 12),
-              Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
+              ),
             ],
           ),
         ),
