@@ -1,206 +1,337 @@
 import 'package:flutter/material.dart';
-import 'package:monitoreo_precios/models/precio_model.dart';
-import 'package:monitoreo_precios/services/historial_service.dart';
-import 'package:monitoreo_precios/services/alert_service.dart';
-import 'dart:math';
+import 'package:monitoreo_precios/widgets/web3_widgets.dart';
+import 'package:monitoreo_precios/services/precio_service.dart';
+import 'package:monitoreo_precios/services/producto_service.dart';
 
-class PrecioTendenciaView extends StatefulWidget {
+class PrecioTendenciaScreen extends StatefulWidget {
   final int productoId;
   final String productoNombre;
 
-  const PrecioTendenciaView({Key? key, required this.productoId, required this.productoNombre}) : super(key: key);
+  const PrecioTendenciaScreen({Key? key, required this.productoId, required this.productoNombre}) : super(key: key);
 
   @override
-  State<PrecioTendenciaView> createState() => _PrecioTendenciaViewState();
+  State<PrecioTendenciaScreen> createState() => _PrecioTendenciaScreenState();
 }
 
-class _PrecioTendenciaViewState extends State<PrecioTendenciaView> {
-  List<Precio> _history = [];
+class _PrecioTendenciaScreenState extends State<PrecioTendenciaScreen> {
   bool _loading = true;
-  int _days = 7;
+  List<Map<String, dynamic>> _tendenciaData = [];
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadTendenciaData();
   }
 
-  Future<void> _load() async {
+  Future<void> _loadTendenciaData() async {
     setState(() => _loading = true);
-    final h = await HistorialService.generateHistory(widget.productoId, days: _days);
+
+    // Simular datos de tendencia por los últimos 7 días
+    final precios = await PrecioService.fetchPricesByProduct(widget.productoId);
+    final mercados = await ProductoService.fetchMarkets();
+
+    // Agrupar por mercado y calcular tendencia
+    final tendencias = <Map<String, dynamic>>[];
+    for (final mercado in mercados) {
+      final preciosMercado = precios.where((p) => p.mercadoId == mercado.id).toList();
+      if (preciosMercado.isNotEmpty) {
+        preciosMercado.sort((a, b) => b.fechaActualizacion.compareTo(a.fechaActualizacion));
+        final precioActual = preciosMercado.first.valor;
+        final precioAnterior = preciosMercado.length > 1 ? preciosMercado[1].valor : precioActual;
+        final cambio = precioActual - precioAnterior;
+        final porcentajeCambio = precioAnterior > 0 ? (cambio / precioAnterior) * 100 : 0.0;
+
+        tendencias.add({
+          'mercado': mercado.nombre,
+          'precioActual': precioActual,
+          'cambio': cambio,
+          'porcentajeCambio': porcentajeCambio,
+          'fecha': preciosMercado.first.fechaActualizacion,
+        });
+      }
+    }
+
     setState(() {
-      _history = h;
+      _tendenciaData = tendencias;
       _loading = false;
     });
-  }
-
-  Future<void> _createAlertFromValue(double value) async {
-    // Default create alert 'above' with value
-    await AlertService.addAlert(widget.productoId, value, AlertDirection.above);
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alerta creada (por encima)')));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Tendencia — ${widget.productoNombre}')),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text('Tendencias — ${widget.productoNombre}'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Web3GradientBackground(
+        child: SafeArea(
+          child: _loading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF00FFF0),
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
                     children: [
-                      DropdownButton<int>(
-                        value: _days,
-                        items: const [
-                          DropdownMenuItem(value: 7, child: Text('Últimos 7 días')),
-                          DropdownMenuItem(value: 14, child: Text('Últimos 14 días')),
-                        ],
-                        onChanged: (v) async {
-                          if (v == null) return;
-                          setState(() => _days = v);
-                          await _load();
-                        },
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          if (_history.isNotEmpty) {
-                            final latest = _history.last.valor;
-                            _createAlertFromValue(latest);
-                          }
-                        },
-                        icon: const Icon(Icons.add_alert),
-                        label: const Text('Crear alerta con último precio'),
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: PriceChart(history: _history),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 120,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _history.length,
-                      itemBuilder: (context, index) {
-                        final p = _history[index];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 6),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
+                      const SizedBox(height: 16),
+
+                      // Header con información del producto
+                      Web3GlassCard(
+                        child: Column(
+                          children: [
+                            Row(
                               children: [
-                                Text(_formatDateShort(p.fechaActualizacion)),
-                                const SizedBox(height: 6),
-                                Text('${p.valor.toStringAsFixed(2)} Bs', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.trending_up,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.productoNombre,
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Tendencia de precios por mercado',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.white.withOpacity(0.7),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  )
-                ],
-              ),
+                            if (_tendenciaData.isNotEmpty) ...[
+                              const SizedBox(height: 16),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF00FFF0).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    Column(
+                                      children: [
+                                        Text(
+                                          '${_tendenciaData.length}',
+                                          style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF00FFF0),
+                                          ),
+                                        ),
+                                        Text(
+                                          'Mercados',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.white.withOpacity(0.8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Container(
+                                      width: 1,
+                                      height: 40,
+                                      color: Colors.white.withOpacity(0.3),
+                                    ),
+                                    Column(
+                                      children: [
+                                        Text(
+                                          '${_getPromedioPrecio().toStringAsFixed(2)} Bs',
+                                          style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF00FFF0),
+                                          ),
+                                        ),
+                                        Text(
+                                          'Precio promedio',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.white.withOpacity(0.8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Lista de tendencias por mercado
+                      Expanded(
+                        child: _tendenciaData.isEmpty
+                            ? Center(
+                                child: Web3GlassCard(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                                          ),
+                                          borderRadius: BorderRadius.circular(50),
+                                        ),
+                                        child: const Icon(
+                                          Icons.show_chart,
+                                          size: 48,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      const Text(
+                                        'Sin datos de tendencia',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'No hay suficientes datos para mostrar tendencias de precio',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.white.withOpacity(0.7),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: _tendenciaData.length,
+                                itemBuilder: (context, index) {
+                                  final data = _tendenciaData[index];
+                                  final isPositive = data['cambio'] >= 0;
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: Web3GlassCard(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(8),
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      colors: isPositive
+                                                          ? [const Color(0xFF10B981), const Color(0xFF059669)]
+                                                          : [const Color(0xFFEF4444), const Color(0xFFDC2626)],
+                                                    ),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: Icon(
+                                                    isPositive ? Icons.trending_up : Icons.trending_down,
+                                                    color: Colors.white,
+                                                    size: 20,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        data['mercado'],
+                                                        style: const TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight: FontWeight.w700,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        'Precio actual: ${data['precioActual'].toStringAsFixed(2)} Bs',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.white.withOpacity(0.8),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                                  children: [
+                                                    Text(
+                                                      '${data['cambio'] >= 0 ? '+' : ''}${data['cambio'].toStringAsFixed(2)} Bs',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: isPositive
+                                                            ? const Color(0xFF10B981)
+                                                            : const Color(0xFFEF4444),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '${data['porcentajeCambio'] >= 0 ? '+' : ''}${data['porcentajeCambio'].toStringAsFixed(1)}%',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.white.withOpacity(0.7),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+        ),
       ),
     );
   }
-}
 
-// Fecha simple en español (abreviada)
-const List<String> _monthAbbr = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-String _formatDateShort(DateTime d) => '${d.day.toString().padLeft(2, '0')} ${_monthAbbr[d.month - 1]}';
-
-class PriceChart extends StatelessWidget {
-  final List<Precio> history;
-  const PriceChart({Key? key, required this.history}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    if (history.isEmpty) return const Center(child: Text('Sin datos'));
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: LayoutBuilder(builder: (context, constraints) {
-        return CustomPaint(
-          size: Size(constraints.maxWidth, constraints.maxHeight),
-          painter: _PriceChartPainter(history),
-        );
-      }),
-    );
+  double _getPromedioPrecio() {
+    if (_tendenciaData.isEmpty) return 0.0;
+    final suma = _tendenciaData.fold(0.0, (sum, item) => sum + item['precioActual']);
+    return suma / _tendenciaData.length;
   }
-}
-
-class _PriceChartPainter extends CustomPainter {
-  final List<Precio> history;
-  _PriceChartPainter(this.history);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paintAxis = Paint()
-      ..color = Colors.grey.shade400
-      ..strokeWidth = 1;
-
-    final padding = 24.0;
-    final w = size.width - padding * 2;
-    final h = size.height - padding * 2;
-
-    // Draw axes
-    final origin = Offset(padding, padding + h);
-    final xEnd = Offset(padding + w, padding + h);
-    canvas.drawLine(origin, xEnd, paintAxis);
-    canvas.drawLine(origin, Offset(padding, padding), paintAxis);
-
-    final values = history.map((e) => e.valor).toList();
-    final minV = values.reduce(min);
-    final maxV = values.reduce(max);
-    final vRange = (maxV - minV) == 0 ? maxV : (maxV - minV);
-
-    // Draw polyline
-    final paintLine = Paint()
-      ..color = Colors.blue
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true;
-
-    final dotPaint = Paint()..color = Colors.blue;
-
-    final path = Path();
-    for (int i = 0; i < history.length; i++) {
-      final x = padding + (w * i / (history.length - 1));
-      final y = padding + h - ((history[i].valor - minV) / vRange) * h;
-      if (i == 0) path.moveTo(x, y);
-      else path.lineTo(x, y);
-      // draw dot
-      canvas.drawCircle(Offset(x, y), 3, dotPaint);
-    }
-    canvas.drawPath(path, paintLine);
-
-    // Draw y labels (min and max)
-    final tpMax = TextPainter(text: TextSpan(text: maxV.toStringAsFixed(2), style: const TextStyle(color: Colors.black, fontSize: 12)), textDirection: TextDirection.ltr);
-    tpMax.layout();
-    tpMax.paint(canvas, Offset(2, padding - tpMax.height / 2));
-    final tpMin = TextPainter(text: TextSpan(text: minV.toStringAsFixed(2), style: const TextStyle(color: Colors.black, fontSize: 12)), textDirection: TextDirection.ltr);
-    tpMin.layout();
-    tpMin.paint(canvas, Offset(2, padding + h - tpMin.height / 2));
-
-    // Draw x labels (dates) - draw up to 5 labels
-    final int maxLabels = 5;
-    final step = max(1, (history.length / (maxLabels - 1)).floor());
-    for (int i = 0; i < history.length; i += step) {
-      final x = padding + (w * i / (history.length - 1));
-      final date = _formatDateShort(history[i].fechaActualizacion);
-      final tp = TextPainter(text: TextSpan(text: date, style: const TextStyle(color: Colors.black, fontSize: 10)), textDirection: TextDirection.ltr);
-      tp.layout();
-      tp.paint(canvas, Offset(x - tp.width / 2, padding + h + 4));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _PriceChartPainter oldDelegate) => oldDelegate.history != history;
 }

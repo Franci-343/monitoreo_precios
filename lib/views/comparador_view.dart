@@ -3,10 +3,9 @@ import 'package:monitoreo_precios/models/precio_model.dart';
 import 'package:monitoreo_precios/services/precio_service.dart';
 import 'package:monitoreo_precios/services/producto_service.dart';
 import 'package:monitoreo_precios/services/alert_service.dart';
-import 'package:monitoreo_precios/services/historial_service.dart';
-import 'package:monitoreo_precios/views/precio_tendencia_view.dart';
 import 'package:monitoreo_precios/services/reporte_service.dart';
 import 'package:monitoreo_precios/widgets/web3_widgets.dart';
+import 'precio_tendencia_view.dart';
 
 class ComparadorView extends StatefulWidget {
   final int productoId;
@@ -23,7 +22,6 @@ class _ComparadorViewState extends State<ComparadorView> {
   List<Precio> _precios = [];
   bool _loading = true;
 
-  int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int _sortColumnIndex = 1; // default sort by price
   bool _sortAscending = true;
 
@@ -575,7 +573,7 @@ class _ComparadorViewState extends State<ComparadorView> {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => PrecioTendenciaView(
+                  builder: (_) => PrecioTendenciaScreen(
                     productoId: widget.productoId,
                     productoNombre: widget.productoNombre,
                   ),
@@ -657,7 +655,7 @@ class _ComparadorViewState extends State<ComparadorView> {
                               onPressed: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) => PrecioTendenciaView(
+                                    builder: (_) => PrecioTendenciaScreen(
                                       productoId: widget.productoId,
                                       productoNombre: widget.productoNombre,
                                     ),
@@ -968,7 +966,12 @@ class _ComparadorViewState extends State<ComparadorView> {
   Future<void> _showReportDialog(int mercadoId) async {
     final formKey = GlobalKey<FormState>();
     final priceCtrl = TextEditingController();
-    final mercadoName = ProductoService.getMarketsSync().firstWhere((m) => m.id == mercadoId).nombre;
+    String mercadoName;
+    try {
+      mercadoName = ProductoService.getMarketsSync().firstWhere((m) => m.id == mercadoId).nombre;
+    } catch (_) {
+      mercadoName = 'Mercado $mercadoId';
+    }
 
     await showDialog<void>(
       context: context,
@@ -1166,6 +1169,7 @@ class _ComparadorViewState extends State<ComparadorView> {
   }
 }
 
+// ignore: unused_element
 class _PrecioDataSource extends DataTableSource {
   final List<Precio> _precios;
   final List mercados; // list of Mercado

@@ -307,7 +307,7 @@ class HomeAfterLogin extends StatelessWidget {
                     children: [
                       _Web3HomeCard(
                         icon: Icons.search,
-                        label: 'Consultar\nProductos',
+                        label: 'Consultar Productos',
                         gradientColors: const [Color(0xFF6366F1), Color(0xFF8B5CF6)],
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const ProductoView()),
@@ -315,7 +315,7 @@ class HomeAfterLogin extends StatelessWidget {
                       ),
                       _Web3HomeCard(
                         icon: Icons.favorite,
-                        label: 'Mis\nFavoritos',
+                        label: 'Mis Favoritos',
                         gradientColors: const [Color(0xFFEC4899), Color(0xFFF97316)],
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const FavoritosView()),
@@ -323,7 +323,7 @@ class HomeAfterLogin extends StatelessWidget {
                       ),
                       _Web3HomeCard(
                         icon: Icons.analytics,
-                        label: 'Reportes y\nTendencias',
+                        label: 'Reportes y Tendencias',
                         gradientColors: const [Color(0xFF06B6D4), Color(0xFF3B82F6)],
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const ReporteView()),
@@ -331,7 +331,7 @@ class HomeAfterLogin extends StatelessWidget {
                       ),
                       _Web3HomeCard(
                         icon: Icons.person,
-                        label: 'Mi\nPerfil',
+                        label: 'Mi Perfil',
                         gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const PerfilView()),
@@ -470,6 +470,8 @@ class _Web3HomeCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   height: 1.2,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
