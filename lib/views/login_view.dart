@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:monitoreo_precios/services/auth_service.dart';
 import 'package:monitoreo_precios/views/register_view.dart';
 import 'package:monitoreo_precios/views/producto_view.dart';
 import 'package:monitoreo_precios/views/favoritos_view.dart';
@@ -15,6 +16,7 @@ class LoginView extends StatefulWidget {
 
 class _LoginViewState extends State<LoginView> {
   final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _loading = false;
@@ -31,26 +33,32 @@ class _LoginViewState extends State<LoginView> {
 
     setState(() => _loading = true);
 
-    // Simular un proceso de autenticación local (sin conexión a BD)
-    await Future.delayed(const Duration(seconds: 1));
-
-    setState(() => _loading = false);
-
-    // Validación simple: si el email contiene '@' y la contraseña tiene al menos 6 chars
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    if (email.contains('@') && password.length >= 6) {
-      // Ir a pantalla principal simulada
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeAfterLogin()),
+    try {
+      final usuario = await _authService.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
       );
-    } else {
+
+      if (!mounted) return;
+
+      if (usuario != null) {
+        // Ir a pantalla principal
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeAfterLogin()),
+        );
+      }
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Credenciales inválidas. Revise e intente nuevamente.')),
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -151,7 +159,8 @@ class _LoginViewState extends State<LoginView> {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Ingrese su correo electrónico';
                                 }
-                                if (!value.contains('@')) return 'Ingrese un correo válido';
+                                if (!value.contains('@'))
+                                  return 'Ingrese un correo válido';
                                 return null;
                               },
                             ),
@@ -164,8 +173,10 @@ class _LoginViewState extends State<LoginView> {
                               obscureText: true,
                               prefixIcon: Icons.lock,
                               validator: (value) {
-                                if (value == null || value.isEmpty) return 'Ingrese su contraseña';
-                                if (value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+                                if (value == null || value.isEmpty)
+                                  return 'Ingrese su contraseña';
+                                if (value.length < 6)
+                                  return 'La contraseña debe tener al menos 6 caracteres';
                                 return null;
                               },
                             ),
@@ -184,16 +195,26 @@ class _LoginViewState extends State<LoginView> {
                               onPressed: _loading
                                   ? null
                                   : () async {
-                                      final result = await Navigator.of(context).push<String?>(
-                                        MaterialPageRoute(builder: (_) => const RegisterView()),
-                                      );
+                                      final result = await Navigator.of(context)
+                                          .push<String?>(
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const RegisterView(),
+                                            ),
+                                          );
                                       if (result != null && result.isNotEmpty) {
                                         _emailController.text = result;
                                         if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
-                                              content: const Text('Registro exitoso. Por favor ingresa tu contraseña.'),
-                                              backgroundColor: const Color(0xFF00FFF0).withOpacity(0.8),
+                                              content: const Text(
+                                                'Registro exitoso. Por favor ingresa tu contraseña.',
+                                              ),
+                                              backgroundColor: const Color(
+                                                0xFF00FFF0,
+                                              ).withOpacity(0.8),
                                             ),
                                           );
                                         }
@@ -217,7 +238,10 @@ class _LoginViewState extends State<LoginView> {
 
                     // Indicador de versión con estilo Web3
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF16213E).withOpacity(0.3),
                         borderRadius: BorderRadius.circular(20),
@@ -259,9 +283,9 @@ class HomeAfterLogin extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.person),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const PerfilView()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const PerfilView())),
           ),
         ],
       ),
@@ -308,31 +332,49 @@ class HomeAfterLogin extends StatelessWidget {
                       _Web3HomeCard(
                         icon: Icons.search,
                         label: 'Consultar Productos',
-                        gradientColors: const [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                        gradientColors: const [
+                          Color(0xFF6366F1),
+                          Color(0xFF8B5CF6),
+                        ],
                         onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const ProductoView()),
+                          MaterialPageRoute(
+                            builder: (_) => const ProductoView(),
+                          ),
                         ),
                       ),
                       _Web3HomeCard(
                         icon: Icons.favorite,
                         label: 'Mis Favoritos',
-                        gradientColors: const [Color(0xFFEC4899), Color(0xFFF97316)],
+                        gradientColors: const [
+                          Color(0xFFEC4899),
+                          Color(0xFFF97316),
+                        ],
                         onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const FavoritosView()),
+                          MaterialPageRoute(
+                            builder: (_) => const FavoritosView(),
+                          ),
                         ),
                       ),
                       _Web3HomeCard(
                         icon: Icons.analytics,
                         label: 'Reportes y Tendencias',
-                        gradientColors: const [Color(0xFF06B6D4), Color(0xFF3B82F6)],
+                        gradientColors: const [
+                          Color(0xFF06B6D4),
+                          Color(0xFF3B82F6),
+                        ],
                         onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const ReporteView()),
+                          MaterialPageRoute(
+                            builder: (_) => const ReporteView(),
+                          ),
                         ),
                       ),
                       _Web3HomeCard(
                         icon: Icons.person,
                         label: 'Mi Perfil',
-                        gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
+                        gradientColors: const [
+                          Color(0xFF10B981),
+                          Color(0xFF059669),
+                        ],
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const PerfilView()),
                         ),
@@ -440,10 +482,7 @@ class _Web3HomeCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFF16213E).withOpacity(0.2),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -454,11 +493,7 @@ class _Web3HomeCard extends StatelessWidget {
                   color: Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  icon,
-                  size: 32,
-                  color: Colors.white,
-                ),
+                child: Icon(icon, size: 32, color: Colors.white),
               ),
               const SizedBox(height: 12),
               Text(

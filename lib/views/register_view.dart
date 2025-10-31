@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:monitoreo_precios/services/auth_service.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({Key? key}) : super(key: key);
@@ -9,6 +10,7 @@ class RegisterView extends StatefulWidget {
 
 class _RegisterViewState extends State<RegisterView> {
   final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -26,32 +28,50 @@ class _RegisterViewState extends State<RegisterView> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _loading = true);
 
-    // Simular proceso de registro (sin BD)
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final usuario = await _authService.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        nombre: _nameController.text.trim(),
+      );
 
-    setState(() => _loading = false);
+      if (!mounted) return;
 
-    // Al finalizar, devolvemos el correo al login para prellenarlo
-    if (!mounted) return;
-    Navigator.of(context).pop(_emailController.text.trim());
+      if (usuario != null) {
+        // Volver al login con el email pre-rellenado
+        Navigator.of(context).pop(_emailController.text.trim());
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Registro'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Registro'), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(
           child: SingleChildScrollView(
             child: Card(
               elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Form(
@@ -66,7 +86,8 @@ class _RegisterViewState extends State<RegisterView> {
                           prefixIcon: Icon(Icons.person),
                         ),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) return 'Ingrese su nombre';
+                          if (value == null || value.trim().isEmpty)
+                            return 'Ingrese su nombre';
                           return null;
                         },
                       ),
@@ -79,8 +100,10 @@ class _RegisterViewState extends State<RegisterView> {
                           prefixIcon: Icon(Icons.email),
                         ),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) return 'Ingrese su correo';
-                          if (!value.contains('@')) return 'Ingrese un correo válido';
+                          if (value == null || value.trim().isEmpty)
+                            return 'Ingrese su correo';
+                          if (!value.contains('@'))
+                            return 'Ingrese un correo válido';
                           return null;
                         },
                       ),
@@ -93,8 +116,10 @@ class _RegisterViewState extends State<RegisterView> {
                           prefixIcon: Icon(Icons.lock),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return 'Ingrese una contraseña';
-                          if (value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+                          if (value == null || value.isEmpty)
+                            return 'Ingrese una contraseña';
+                          if (value.length < 6)
+                            return 'La contraseña debe tener al menos 6 caracteres';
                           return null;
                         },
                       ),
@@ -107,8 +132,10 @@ class _RegisterViewState extends State<RegisterView> {
                           prefixIcon: Icon(Icons.lock_outline),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return 'Confirme su contraseña';
-                          if (value != _passwordController.text) return 'Las contraseñas no coinciden';
+                          if (value == null || value.isEmpty)
+                            return 'Confirme su contraseña';
+                          if (value != _passwordController.text)
+                            return 'Las contraseñas no coinciden';
                           return null;
                         },
                       ),
@@ -121,16 +148,21 @@ class _RegisterViewState extends State<RegisterView> {
                               ? const SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
                                 )
                               : const Text('Registrarse'),
                         ),
                       ),
                       const SizedBox(height: 8),
                       TextButton(
-                        onPressed: _loading ? null : () => Navigator.of(context).pop(),
+                        onPressed: _loading
+                            ? null
+                            : () => Navigator.of(context).pop(),
                         child: const Text('Cancelar'),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -142,4 +174,3 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 }
-

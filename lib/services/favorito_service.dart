@@ -1,50 +1,141 @@
-import 'dart:async';
+import '../models/favorito_model.dart';
+import '../services/auth_service.dart';
+import '../main.dart';
 
-import 'package:monitoreo_precios/models/favorito_model.dart';
-
-/// Servicio de favoritos en memoria (simula persistencia).
-///
-/// Nota: esto evita la dependencia en `shared_preferences` y mantiene
-/// la misma API que antes. Más adelante se puede reemplazar por
-/// SharedPreferences o Hive sin cambiar el resto de la app.
 class FavoritoService {
-  // Mapa usuarioId -> Set<productoId>
-  static final Map<int, Set<int>> _memoryFavorites = {};
+  // Singleton pattern
+  static final FavoritoService _instance = FavoritoService._internal();
+  factory FavoritoService() => _instance;
+  FavoritoService._internal();
 
-  static Future<void> _ensureUser(int usuarioId) async {
-    _memoryFavorites.putIfAbsent(usuarioId, () => <int>{});
+  final _authService = AuthService();
+
+  // ============================================
+  // OBTENER FAVORITOS DEL USUARIO ACTUAL
+  // ============================================
+  Future<List<Favorito>> getFavoritos() async {
+    final user = _authService.getCurrentUser();
+    if (user == null) throw Exception('Usuario no autenticado');
+
+    try {
+      final response = await supabase
+          .from('favoritos')
+          .select('*')
+          .eq('usuario_id', user.id)
+          .order('created_at', ascending: false);
+
+      return (response as List).map((json) => Favorito.fromMap(json)).toList();
+    } catch (e) {
+      throw Exception('Error al obtener favoritos: $e');
+    }
   }
 
+  // ============================================
+  // AGREGAR A FAVORITOS
+  // ============================================
+  Future<void> agregarFavorito(int productoId) async {
+    final user = _authService.getCurrentUser();
+    if (user == null) throw Exception('Usuario no autenticado');
+
+    try {
+      await supabase.from('favoritos').insert({
+        'usuario_id': user.id,
+        'producto_id': productoId,
+      });
+    } catch (e) {
+      throw Exception('Error al agregar favorito: $e');
+    }
+  }
+
+  // ============================================
+  // ELIMINAR DE FAVORITOS
+  // ============================================
+  Future<void> eliminarFavorito(int favoritoId) async {
+    try {
+      await supabase.from('favoritos').delete().eq('id', favoritoId);
+    } catch (e) {
+      throw Exception('Error al eliminar favorito: $e');
+    }
+  }
+
+  // ============================================
+  // ELIMINAR POR PRODUCTO ID
+  // ============================================
+  Future<void> eliminarFavoritoPorProducto(int productoId) async {
+    final user = _authService.getCurrentUser();
+    if (user == null) throw Exception('Usuario no autenticado');
+
+    try {
+      await supabase
+          .from('favoritos')
+          .delete()
+          .eq('usuario_id', user.id)
+          .eq('producto_id', productoId);
+    } catch (e) {
+      throw Exception('Error al eliminar favorito: $e');
+    }
+  }
+
+  // ============================================
+  // VERIFICAR SI UN PRODUCTO ES FAVORITO
+  // ============================================
+  Future<bool> esFavorito(int productoId) async {
+    final user = _authService.getCurrentUser();
+    if (user == null) return false;
+
+    try {
+      final response = await supabase
+          .from('favoritos')
+          .select()
+          .eq('usuario_id', user.id)
+          .eq('producto_id', productoId)
+          .maybeSingle();
+
+      return response != null;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ============================================
+  // TOGGLE FAVORITO
+  // ============================================
+  Future<void> toggleFavorito(int productoId) async {
+    final isFav = await esFavorito(productoId);
+
+    if (isFav) {
+      await eliminarFavoritoPorProducto(productoId);
+    } else {
+      await agregarFavorito(productoId);
+    }
+  }
+
+  // ============================================
+  // MÉTODOS DE COMPATIBILIDAD (para código anterior)
+  // ============================================
   static Future<List<Favorito>> getFavoritesForUser(int usuarioId) async {
-    await _ensureUser(usuarioId);
-    final set = _memoryFavorites[usuarioId]!;
-    return set.map((pid) => Favorito(id: pid, usuarioId: usuarioId, productoId: pid)).toList();
+    // Para compatibilidad, pero ahora usamos el usuario autenticado
+    final service = FavoritoService();
+    return await service.getFavoritos();
   }
 
   static Future<bool> isFavorite(int usuarioId, int productoId) async {
-    await _ensureUser(usuarioId);
-    return _memoryFavorites[usuarioId]!.contains(productoId);
+    final service = FavoritoService();
+    return await service.esFavorito(productoId);
   }
 
   static Future<void> addFavorite(int usuarioId, int productoId) async {
-    await _ensureUser(usuarioId);
-    _memoryFavorites[usuarioId]!.add(productoId);
-    // Simular latencia
-    await Future.delayed(const Duration(milliseconds: 50));
+    final service = FavoritoService();
+    await service.agregarFavorito(productoId);
   }
 
   static Future<void> removeFavorite(int usuarioId, int productoId) async {
-    await _ensureUser(usuarioId);
-    _memoryFavorites[usuarioId]!.remove(productoId);
-    await Future.delayed(const Duration(milliseconds: 50));
+    final service = FavoritoService();
+    await service.eliminarFavoritoPorProducto(productoId);
   }
 
   static Future<void> toggleFavorite(int usuarioId, int productoId) async {
-    final exists = await isFavorite(usuarioId, productoId);
-    if (exists) {
-      await removeFavorite(usuarioId, productoId);
-    } else {
-      await addFavorite(usuarioId, productoId);
-    }
+    final service = FavoritoService();
+    await service.toggleFavorito(productoId);
   }
 }

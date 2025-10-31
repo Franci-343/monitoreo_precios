@@ -1,52 +1,189 @@
-import 'dart:async';
-
-import 'package:monitoreo_precios/models/producto_model.dart';
-import 'package:monitoreo_precios/models/mercado_model.dart';
+import '../models/producto_model.dart';
+import '../models/mercado_model.dart';
+import '../main.dart';
 
 class ProductoService {
-  // Datos simulados en memoria
-  static final List<Producto> _productos = [
-    Producto(id: 1, nombre: 'Papa', categoria: 'Verduras'),
-    Producto(id: 2, nombre: 'Tomate', categoria: 'Verduras'),
-    Producto(id: 3, nombre: 'Pollo', categoria: 'Carnes'),
-    Producto(id: 4, nombre: 'Manzana', categoria: 'Frutas'),
-    Producto(id: 5, nombre: 'Plátano', categoria: 'Frutas'),
-    Producto(id: 6, nombre: 'Lechuga', categoria: 'Verduras'),
-  ];
+  // Singleton pattern
+  static final ProductoService _instance = ProductoService._internal();
+  factory ProductoService() => _instance;
+  ProductoService._internal();
 
-  static final List<Mercado> _mercados = [
-    Mercado(id: 1, nombre: 'Mercado Rodríguez', zona: 'Centro'),
-    Mercado(id: 2, nombre: 'Feria Achumani', zona: 'Achumani'),
-    Mercado(id: 3, nombre: 'Mercado 16 de Julio', zona: 'Obrajes'),
-    Mercado(id: 4, nombre: 'Feria San Miguel', zona: 'San Miguel'),
-  ];
+  // ============================================
+  // OBTENER TODOS LOS PRODUCTOS
+  // ============================================
+  Future<List<Producto>> getProductos() async {
+    try {
+      final response = await supabase
+          .from('productos')
+          .select('id, nombre, categoria_id, unidad_medida, categorias(nombre)')
+          .eq('activo', true)
+          .order('nombre');
 
-  // Simula una petición async
-  static Future<List<Producto>> fetchProducts({String? query, String? categoria}) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    Iterable<Producto> items = _productos;
+      return (response as List).map((json) {
+        return Producto(
+          id: json['id'] as int,
+          nombre: json['nombre'] as String,
+          categoria: json['categorias']['nombre'] as String,
+          categoriaId: json['categoria_id'] as int,
+          unidadMedida: json['unidad_medida'] as String?,
+        );
+      }).toList();
+    } catch (e) {
+      throw Exception('Error al obtener productos: $e');
+    }
+  }
+
+  // ============================================
+  // BUSCAR PRODUCTOS POR NOMBRE
+  // ============================================
+  Future<List<Producto>> buscarProductos(String query) async {
+    try {
+      final response = await supabase
+          .from('productos')
+          .select('id, nombre, categoria_id, unidad_medida, categorias(nombre)')
+          .ilike('nombre', '%$query%')
+          .eq('activo', true)
+          .order('nombre');
+
+      return (response as List).map((json) {
+        return Producto(
+          id: json['id'] as int,
+          nombre: json['nombre'] as String,
+          categoria: json['categorias']['nombre'] as String,
+          categoriaId: json['categoria_id'] as int,
+          unidadMedida: json['unidad_medida'] as String?,
+        );
+      }).toList();
+    } catch (e) {
+      throw Exception('Error al buscar productos: $e');
+    }
+  }
+
+  // ============================================
+  // OBTENER PRODUCTOS POR CATEGORÍA
+  // ============================================
+  Future<List<Producto>> getProductosPorCategoria(String categoria) async {
+    try {
+      // Primero obtenemos el ID de la categoría
+      final catResponse = await supabase
+          .from('categorias')
+          .select('id')
+          .eq('nombre', categoria)
+          .single();
+
+      final categoriaId = catResponse['id'] as int;
+
+      final response = await supabase
+          .from('productos')
+          .select('id, nombre, categoria_id, unidad_medida, categorias(nombre)')
+          .eq('categoria_id', categoriaId)
+          .eq('activo', true)
+          .order('nombre');
+
+      return (response as List).map((json) {
+        return Producto(
+          id: json['id'] as int,
+          nombre: json['nombre'] as String,
+          categoria: json['categorias']['nombre'] as String,
+          categoriaId: json['categoria_id'] as int,
+          unidadMedida: json['unidad_medida'] as String?,
+        );
+      }).toList();
+    } catch (e) {
+      throw Exception('Error al obtener productos por categoría: $e');
+    }
+  }
+
+  // ============================================
+  // OBTENER UN PRODUCTO POR ID
+  // ============================================
+  Future<Producto?> getProductoPorId(int id) async {
+    try {
+      final response = await supabase
+          .from('productos')
+          .select('id, nombre, categoria_id, unidad_medida, categorias(nombre)')
+          .eq('id', id)
+          .single();
+
+      return Producto(
+        id: response['id'] as int,
+        nombre: response['nombre'] as String,
+        categoria: response['categorias']['nombre'] as String,
+        categoriaId: response['categoria_id'] as int,
+        unidadMedida: response['unidad_medida'] as String?,
+      );
+    } catch (e) {
+      print('Error al obtener producto: $e');
+      return null;
+    }
+  }
+
+  // ============================================
+  // OBTENER CATEGORÍAS
+  // ============================================
+  Future<List<String>> getCategoriasNombres() async {
+    try {
+      final response = await supabase
+          .from('categorias')
+          .select('nombre')
+          .eq('activo', true)
+          .order('orden');
+
+      return (response as List)
+          .map((json) => json['nombre'] as String)
+          .toList();
+    } catch (e) {
+      throw Exception('Error al obtener categorías: $e');
+    }
+  }
+
+  // ============================================
+  // OBTENER MERCADOS
+  // ============================================
+  Future<List<Mercado>> getMercados() async {
+    try {
+      final response = await supabase
+          .from('mercados')
+          .select('*')
+          .eq('activo', true)
+          .order('nombre');
+
+      return (response as List).map((json) => Mercado.fromMap(json)).toList();
+    } catch (e) {
+      throw Exception('Error al obtener mercados: $e');
+    }
+  }
+
+  // ============================================
+  // MÉTODOS DE COMPATIBILIDAD CON CÓDIGO ANTERIOR
+  // ============================================
+  static Future<List<Producto>> fetchProducts({
+    String? query,
+    String? categoria,
+  }) async {
+    final service = ProductoService();
+
     if (categoria != null && categoria.isNotEmpty) {
-      items = items.where((p) => p.categoria.toLowerCase() == categoria.toLowerCase());
+      return await service.getProductosPorCategoria(categoria);
+    } else if (query != null && query.trim().isNotEmpty) {
+      return await service.buscarProductos(query);
+    } else {
+      return await service.getProductos();
     }
-    if (query != null && query.trim().isNotEmpty) {
-      final q = query.trim().toLowerCase();
-      items = items.where((p) => p.nombre.toLowerCase().contains(q));
-    }
-    return items.toList();
   }
 
   static Future<List<String>> fetchCategories() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    final cats = _productos.map((p) => p.categoria).toSet().toList();
-    cats.sort();
-    return cats;
+    final service = ProductoService();
+    return await service.getCategoriasNombres();
   }
 
   static Future<List<Mercado>> fetchMarkets() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return List<Mercado>.from(_mercados);
+    final service = ProductoService();
+    return await service.getMercados();
   }
 
-  // Sync access for small prototipos
-  static List<Mercado> getMarketsSync() => _mercados;
+  static Future<List<Mercado>> getMarketsSync() async {
+    final service = ProductoService();
+    return await service.getMercados();
+  }
 }
