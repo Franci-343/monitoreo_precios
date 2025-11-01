@@ -49,5 +49,5 @@ app.*.map.json
 .env
 .env.local
 .env.*.local
-# Ignorar carpeta de base de datos local
+# Ignorar carpeta de base de datos 
 /database
