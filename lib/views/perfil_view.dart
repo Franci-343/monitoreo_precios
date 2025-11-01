@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:monitoreo_precios/models/usuario_model.dart';
 import 'package:monitoreo_precios/services/auth_service.dart';
 import 'package:monitoreo_precios/widgets/web3_widgets.dart';
+import 'package:monitoreo_precios/widgets/avatar_selector.dart';
+import 'package:monitoreo_precios/views/login_view.dart';
 
 class PerfilView extends StatefulWidget {
   const PerfilView({Key? key}) : super(key: key);
@@ -73,6 +75,7 @@ class _PerfilViewState extends State<PerfilView> {
         nombre: _nombreController.text.trim(),
         telefono: _telefonoController.text.trim(),
         zonaPreferida: _zonaController.text.trim(),
+        avatarUrl: _usuario?.avatarUrl, // Mantener el avatar actual
       );
 
       setState(() {
@@ -98,6 +101,46 @@ class _PerfilViewState extends State<PerfilView> {
         ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
       }
     }
+  }
+
+  Future<void> _cambiarAvatar() async {
+    await showDialog(
+      context: context,
+      builder: (context) => AvatarSelector(
+        currentAvatarUrl: _usuario?.avatarUrl,
+        onAvatarSelected: (avatarUrl) async {
+          try {
+            final currentUser = _authService.getCurrentUser();
+            if (currentUser == null) return;
+
+            await _authService.updatePerfil(
+              userId: currentUser.id,
+              avatarUrl: avatarUrl,
+            );
+
+            await _cargarPerfil();
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Avatar actualizado exitosamente'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error al actualizar avatar: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
   }
 
   Future<void> _cerrarSesion() async {
@@ -130,7 +173,11 @@ class _PerfilViewState extends State<PerfilView> {
     if (confirmar == true) {
       await _authService.signOut();
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
+        // Navegar al login y eliminar todas las rutas anteriores
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginView()),
+          (route) => false,
+        );
       }
     }
   }
@@ -232,7 +279,11 @@ class _PerfilViewState extends State<PerfilView> {
                 backgroundColor: Colors.green,
               ),
             );
-            Navigator.of(context).pushReplacementNamed('/login');
+            // Navegar al login y eliminar todas las rutas anteriores
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const LoginView()),
+              (route) => false,
+            );
           }
         } catch (e) {
           setState(() => _isLoading = false);
@@ -299,26 +350,11 @@ class _PerfilViewState extends State<PerfilView> {
               children: [
                 const SizedBox(height: 20),
 
-                // Avatar
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF6366F1).withOpacity(0.3),
-                        blurRadius: 20,
-                        spreadRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: const CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.transparent,
-                    child: Icon(Icons.person, size: 50, color: Colors.white),
-                  ),
+                // Avatar con selector
+                UserAvatar(
+                  avatarUrl: _usuario?.avatarUrl,
+                  size: 120,
+                  onTap: _cambiarAvatar,
                 ),
 
                 const SizedBox(height: 24),
