@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:monitoreo_precios/services/auth_service.dart';
+import 'package:monitoreo_precios/services/admin_service.dart';
 import 'package:monitoreo_precios/views/register_view.dart';
 import 'package:monitoreo_precios/views/producto_view.dart';
 import 'package:monitoreo_precios/views/comparar_mercados_view.dart';
 import 'package:monitoreo_precios/views/favoritos_view.dart';
 import 'package:monitoreo_precios/views/perfil_view.dart';
+import 'package:monitoreo_precios/views/admin/admin_panel_view.dart';
 import 'package:monitoreo_precios/widgets/web3_widgets.dart';
 
 class LoginView extends StatefulWidget {
@@ -42,9 +44,15 @@ class _LoginViewState extends State<LoginView> {
       if (!mounted) return;
 
       if (usuario != null) {
-        // Ir a pantalla principal
+        // Verificar si es administrador
+        final isAdmin = AdminService.isAdmin(_emailController.text.trim());
+
+        // Ir a la pantalla correspondiente
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeAfterLogin()),
+          MaterialPageRoute(
+            builder: (_) =>
+                isAdmin ? const AdminPanelView() : const HomeAfterLogin(),
+          ),
         );
       }
     } catch (e) {
