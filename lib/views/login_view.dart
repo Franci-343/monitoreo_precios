@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:monitoreo_precios/services/auth_service.dart';
 import 'package:monitoreo_precios/views/register_view.dart';
 import 'package:monitoreo_precios/views/producto_view.dart';
+import 'package:monitoreo_precios/views/comparar_mercados_view.dart';
 import 'package:monitoreo_precios/views/favoritos_view.dart';
 import 'package:monitoreo_precios/views/perfil_view.dart';
 import 'package:monitoreo_precios/widgets/web3_widgets.dart';
@@ -350,7 +351,7 @@ class HomeAfterLogin extends StatelessWidget {
                         ],
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const ProductoView(),
+                            builder: (_) => const CompararMercadosView(),
                           ),
                         ),
                       ),

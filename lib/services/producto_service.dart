@@ -1,5 +1,6 @@
 import '../models/producto_model.dart';
 import '../models/mercado_model.dart';
+import '../models/categoria_model.dart';
 import '../main.dart';
 
 class ProductoService {
@@ -138,6 +139,49 @@ class ProductoService {
   }
 
   // ============================================
+  // OBTENER CATEGORÍAS COMPLETAS
+  // ============================================
+  Future<List<Categoria>> getCategorias() async {
+    try {
+      final response = await supabase
+          .from('categorias')
+          .select('*')
+          .eq('activo', true)
+          .order('orden');
+
+      return (response as List).map((json) => Categoria.fromMap(json)).toList();
+    } catch (e) {
+      throw Exception('Error al obtener categorías: $e');
+    }
+  }
+
+  // ============================================
+  // OBTENER PRODUCTOS POR ID DE CATEGORÍA
+  // ============================================
+  Future<List<Producto>> getProductosPorCategoriaId(int categoriaId) async {
+    try {
+      final response = await supabase
+          .from('productos')
+          .select('id, nombre, categoria_id, unidad_medida, categorias(nombre)')
+          .eq('categoria_id', categoriaId)
+          .eq('activo', true)
+          .order('nombre');
+
+      return (response as List).map((json) {
+        return Producto(
+          id: json['id'] as int,
+          nombre: json['nombre'] as String,
+          categoria: json['categorias']['nombre'] as String,
+          categoriaId: json['categoria_id'] as int,
+          unidadMedida: json['unidad_medida'] as String?,
+        );
+      }).toList();
+    } catch (e) {
+      throw Exception('Error al obtener productos por categoría: $e');
+    }
+  }
+
+  // ============================================
   // OBTENER MERCADOS
   // ============================================
   Future<List<Mercado>> getMercados() async {
@@ -175,6 +219,16 @@ class ProductoService {
   static Future<List<String>> fetchCategories() async {
     final service = ProductoService();
     return await service.getCategoriasNombres();
+  }
+
+  static Future<List<Categoria>> fetchCategoriesComplete() async {
+    final service = ProductoService();
+    return await service.getCategorias();
+  }
+
+  static Future<List<Producto>> fetchProductsByCategory(int categoriaId) async {
+    final service = ProductoService();
+    return await service.getProductosPorCategoriaId(categoriaId);
   }
 
   static Future<List<Mercado>> fetchMarkets() async {
