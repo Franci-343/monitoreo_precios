@@ -32,7 +32,10 @@ migrate_working_dir/
 .pub/
 #/build/
 /coverage/
-
+build/app/intermediates/merged_native_libs/*.so
+# Ignora todo build excepto web
+build/*
+!build/web/
 # Symbolication related
 app.*.symbols
 
