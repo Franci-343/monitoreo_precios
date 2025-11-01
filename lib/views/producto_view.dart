@@ -4,6 +4,7 @@ import 'package:monitoreo_precios/models/mercado_model.dart';
 import 'package:monitoreo_precios/services/producto_service.dart';
 import 'package:monitoreo_precios/services/precio_service.dart';
 import 'package:monitoreo_precios/services/favorito_service.dart';
+import 'package:monitoreo_precios/services/historial_service.dart';
 import 'package:monitoreo_precios/models/favorito_model.dart';
 import 'package:monitoreo_precios/views/comparador_view.dart';
 import 'package:monitoreo_precios/widgets/web3_widgets.dart';
@@ -588,17 +589,26 @@ class _ProductoViewState extends State<ProductoView> {
                                           ),
                                           const SizedBox(height: 4),
                                           ElevatedButton(
-                                            onPressed: () {
-                                              Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      ComparadorView(
-                                                        productoId: producto.id,
-                                                        productoNombre:
-                                                            producto.nombre,
-                                                      ),
-                                                ),
+                                            onPressed: () async {
+                                              // Agregar al historial
+                                              await HistorialService.agregarAlHistorial(
+                                                producto.id,
                                               );
+
+                                              // Navegar al comparador
+                                              if (mounted) {
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        ComparadorView(
+                                                          productoId:
+                                                              producto.id,
+                                                          productoNombre:
+                                                              producto.nombre,
+                                                        ),
+                                                  ),
+                                                );
+                                              }
                                             },
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: const Color(

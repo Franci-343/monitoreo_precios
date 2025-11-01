@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:monitoreo_precios/views/login_view.dart';
+import 'package:monitoreo_precios/views/favoritos_view.dart';
+import 'package:monitoreo_precios/views/historial_view.dart';
+import 'package:monitoreo_precios/views/alertas_view.dart';
+import 'package:monitoreo_precios/views/producto_view.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -67,6 +71,12 @@ class MonitoreoPreciosApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: _buildWeb3Theme(),
       home: const LoginView(),
+      routes: {
+        '/favoritos': (context) => const FavoritosView(),
+        '/historial': (context) => const HistorialView(),
+        '/alertas': (context) => const AlertasView(),
+        '/productos': (context) => const ProductoView(),
+      },
     );
   }
 

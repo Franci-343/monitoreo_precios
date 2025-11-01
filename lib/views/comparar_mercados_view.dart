@@ -457,7 +457,6 @@ class _CompararMercadosViewState extends State<CompararMercadosView> {
               ),
             ),
           ),
-          const SizedBox(width: 40), // Espacio para icono de diferencia
         ],
       ),
     );
@@ -467,12 +466,10 @@ class _CompararMercadosViewState extends State<CompararMercadosView> {
     final precioIzq = _preciosMercadoIzq[producto.id];
     final precioDer = _preciosMercadoDer[producto.id];
 
-    // Calcular diferencia y cuál es más barato
-    double? diferencia;
+    // Calcular cuál es más barato
     bool? izqMasBarato;
 
     if (precioIzq != null && precioDer != null) {
-      diferencia = (precioIzq.valor - precioDer.valor).abs();
       izqMasBarato = precioIzq.valor < precioDer.valor;
     }
 
@@ -511,7 +508,7 @@ class _CompararMercadosViewState extends State<CompararMercadosView> {
             flex: 1,
             child: _buildPriceCell(
               precioIzq,
-              izqMasBarato == true ? const Color(0xFF10B981) : null,
+              izqMasBarato == true ? const Color(0xFFEF4444) : null,
             ),
           ),
 
@@ -520,20 +517,8 @@ class _CompararMercadosViewState extends State<CompararMercadosView> {
             flex: 1,
             child: _buildPriceCell(
               precioDer,
-              izqMasBarato == false ? const Color(0xFF10B981) : null,
+              izqMasBarato == false ? const Color(0xFFEF4444) : null,
             ),
-          ),
-
-          // Icono de diferencia
-          SizedBox(
-            width: 40,
-            child: diferencia != null
-                ? Icon(
-                    izqMasBarato! ? Icons.arrow_back : Icons.arrow_forward,
-                    color: const Color(0xFF00FFF0),
-                    size: 20,
-                  )
-                : const SizedBox(),
           ),
         ],
       ),

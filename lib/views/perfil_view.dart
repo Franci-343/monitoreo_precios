@@ -276,6 +276,7 @@ class _PerfilViewState extends State<PerfilView> {
               const SnackBar(
                 content: Text('Cuenta eliminada exitosamente'),
                 backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
               ),
             );
             // Navegar al login y eliminar todas las rutas anteriores
@@ -287,10 +288,30 @@ class _PerfilViewState extends State<PerfilView> {
         } catch (e) {
           setState(() => _isLoading = false);
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error al eliminar cuenta: $e'),
-                backgroundColor: Colors.red,
+            // Mostrar diálogo con el error detallado
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: const Color(0xFF1A1A2E),
+                title: const Row(
+                  children: [
+                    Icon(Icons.error, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Error al Eliminar Cuenta'),
+                  ],
+                ),
+                content: SingleChildScrollView(
+                  child: Text(
+                    e.toString().replaceAll('Exception: ', ''),
+                    style: const TextStyle(height: 1.5),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Entendido'),
+                  ),
+                ],
               ),
             );
           }
@@ -458,12 +479,12 @@ class _PerfilViewState extends State<PerfilView> {
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6366F1).withOpacity(0.2),
+                            color: const Color(0xFFEC4899).withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
                             Icons.favorite,
-                            color: Color(0xFF6366F1),
+                            color: Color(0xFFEC4899),
                           ),
                         ),
                         title: const Text('Mis Favoritos'),
@@ -476,41 +497,18 @@ class _PerfilViewState extends State<PerfilView> {
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6366F1).withOpacity(0.2),
+                            color: const Color(0xFF8B5CF6).withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
-                            Icons.favorite,
-                            color: Color(0xFF6366F1),
+                            Icons.history,
+                            color: Color(0xFF8B5CF6),
                           ),
                         ),
-                        title: const Text('Mis Favoritos'),
+                        title: const Text('Historial de Consultas'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () {
-                          Navigator.of(context).pushNamed('/favoritos');
-                        },
-                      ),
-                      ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF06B6D4).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.notifications,
-                            color: Color(0xFF06B6D4),
-                          ),
-                        ),
-                        title: const Text('Mis Alertas de Precio'),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        onTap: () {
-                          // TODO: Implementar vista de alertas
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Próximamente disponible'),
-                            ),
-                          );
+                          Navigator.of(context).pushNamed('/historial');
                         },
                       ),
                     ],

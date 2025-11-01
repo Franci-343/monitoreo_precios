@@ -218,21 +218,39 @@ class AuthService {
 
       print('🗑️ Eliminando cuenta del usuario: ${user.id}');
 
-      // Primero eliminar el perfil de la tabla usuarios
-      // Esto automáticamente eliminará favoritos, reportes y alertas
-      // gracias a las foreign keys con ON DELETE CASCADE
-      await supabase.from('usuarios').delete().eq('id', user.id);
+      // Llamar a la función de base de datos que tiene privilegios elevados
+      // Esta función eliminará:
+      // 1. El perfil de la tabla usuarios
+      // 2. Todos los favoritos (CASCADE)
+      // 3. Todos los reportes (CASCADE)
+      // 4. Todas las alertas (CASCADE)
+      // 5. El usuario de auth.users
+      await supabase.rpc('eliminar_cuenta_usuario');
 
-      print('✅ Perfil eliminado de la tabla usuarios');
+      print('✅ Cuenta eliminada completamente');
 
-      // Luego eliminar el usuario de auth.users usando la API admin
-      // Nota: En Supabase, esto requiere permisos especiales
-      // Por ahora solo eliminaremos el perfil y cerraremos sesión
+      // Cerrar sesión localmente
       await signOut();
 
-      print('✅ Cuenta eliminada exitosamente');
+      print('✅ Sesión cerrada');
     } catch (e) {
       print('❌ Error al eliminar cuenta: $e');
+
+      // Proporcionar un mensaje más descriptivo
+      if (e.toString().contains(
+            'function eliminar_cuenta_usuario() does not exist',
+          ) ||
+          e.toString().contains('could not find the function')) {
+        throw Exception(
+          'La función de eliminación no está disponible.\n\n'
+          'SOLUCIÓN:\n'
+          '1. Ve al SQL Editor de Supabase\n'
+          '2. Ejecuta el archivo database/eliminar_cuenta_function.sql\n'
+          '3. Intenta eliminar la cuenta nuevamente\n\n'
+          'Error técnico: $e',
+        );
+      }
+
       throw Exception('Error al eliminar cuenta: $e');
     }
   }
