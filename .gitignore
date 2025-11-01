@@ -52,5 +52,8 @@ app.*.map.json
 .env
 .env.local
 .env.*.local
+# Permitir .env en build/web para Vercel
+!build/web/.env
+!build/web/assets/.env
 # Ignorar carpeta de base de datos 
 /database
