@@ -164,10 +164,11 @@ class Web3NeonTextField extends StatelessWidget {
         obscureText: obscureText,
         keyboardType: keyboardType,
         validator: validator,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-        ),
+        enableInteractiveSelection: true,
+        autocorrect: false,
+        enableSuggestions: !obscureText,
+        textInputAction: TextInputAction.next,
+        style: const TextStyle(color: Colors.white, fontSize: 16),
         decoration: InputDecoration(
           hintText: hintText,
           labelText: labelText,
@@ -195,10 +196,7 @@ class Web3NeonTextField extends StatelessWidget {
 class Web3GradientBackground extends StatelessWidget {
   final Widget child;
 
-  const Web3GradientBackground({
-    super.key,
-    required this.child,
-  });
+  const Web3GradientBackground({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -207,11 +205,7 @@ class Web3GradientBackground extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF0F0F23),
-            Color(0xFF1A1A2E),
-            Color(0xFF16213E),
-          ],
+          colors: [Color(0xFF0F0F23), Color(0xFF1A1A2E), Color(0xFF16213E)],
           stops: [0.0, 0.5, 1.0],
         ),
       ),
@@ -273,9 +267,7 @@ class Web3PriceCard extends StatelessWidget {
                   onPressed: onFavoritePressed,
                   icon: Icon(
                     isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: isFavorite
-                        ? const Color(0xFF00FFF0)
-                        : Colors.grey,
+                    color: isFavorite ? const Color(0xFF00FFF0) : Colors.grey,
                   ),
                 ),
               ],
@@ -325,8 +317,8 @@ class Web3PriceCard extends StatelessWidget {
                       color: isIncreasing
                           ? Colors.red.withOpacity(0.2)
                           : isDecreasing
-                              ? Colors.green.withOpacity(0.2)
-                              : Colors.grey.withOpacity(0.2),
+                          ? Colors.green.withOpacity(0.2)
+                          : Colors.grey.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -336,14 +328,14 @@ class Web3PriceCard extends StatelessWidget {
                           isIncreasing
                               ? Icons.trending_up
                               : isDecreasing
-                                  ? Icons.trending_down
-                                  : Icons.trending_flat,
+                              ? Icons.trending_down
+                              : Icons.trending_flat,
                           size: 16,
                           color: isIncreasing
                               ? Colors.red
                               : isDecreasing
-                                  ? Colors.green
-                                  : Colors.grey,
+                              ? Colors.green
+                              : Colors.grey,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -354,8 +346,8 @@ class Web3PriceCard extends StatelessWidget {
                             color: isIncreasing
                                 ? Colors.red
                                 : isDecreasing
-                                    ? Colors.green
-                                    : Colors.grey,
+                                ? Colors.green
+                                : Colors.grey,
                           ),
                         ),
                       ],

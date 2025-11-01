@@ -203,7 +203,6 @@ class _PerfilViewState extends State<PerfilView> {
           'Esta acción es irreversible y se eliminarán:\n'
           '• Tu perfil\n'
           '• Tus favoritos\n'
-          '• Tus reportes\n'
           '• Tus alertas',
           style: TextStyle(height: 1.5),
         ),
@@ -477,18 +476,36 @@ class _PerfilViewState extends State<PerfilView> {
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withOpacity(0.2),
+                            color: const Color(0xFF6366F1).withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
-                            Icons.history,
-                            color: Color(0xFF10B981),
+                            Icons.favorite,
+                            color: Color(0xFF6366F1),
                           ),
                         ),
-                        title: const Text('Historial de Reportes'),
+                        title: const Text('Mis Favoritos'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () {
-                          // TODO: Implementar vista de historial
+                          Navigator.of(context).pushNamed('/favoritos');
+                        },
+                      ),
+                      ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF06B6D4).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.notifications,
+                            color: Color(0xFF06B6D4),
+                          ),
+                        ),
+                        title: const Text('Mis Alertas de Precio'),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {
+                          // TODO: Implementar vista de alertas
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Próximamente disponible'),

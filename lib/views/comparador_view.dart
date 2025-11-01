@@ -4,7 +4,6 @@ import 'package:monitoreo_precios/models/mercado_model.dart';
 import 'package:monitoreo_precios/services/precio_service.dart';
 import 'package:monitoreo_precios/services/producto_service.dart';
 import 'package:monitoreo_precios/services/alert_service.dart';
-import 'package:monitoreo_precios/services/reporte_service.dart';
 import 'package:monitoreo_precios/widgets/web3_widgets.dart';
 import 'precio_tendencia_view.dart';
 
@@ -813,7 +812,7 @@ class _ComparadorViewState extends State<ComparadorView> {
                                 ),
                                 const SizedBox(height: 16),
                                 const Text(
-                                  'No hay precios reportados',
+                                  'No hay precios disponibles',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600,
@@ -822,7 +821,7 @@ class _ComparadorViewState extends State<ComparadorView> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Sé el primero en reportar precios para este producto',
+                                  'Aún no hay información de precios para este producto',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 14,
@@ -1050,237 +1049,6 @@ class _ComparadorViewState extends State<ComparadorView> {
                 style: TextStyle(color: Color(0xFF00FFF0)),
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  _showReportDialog(precio.mercadoId);
-                },
-                child: const Text(
-                  'Reportar Nuevo Precio',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _showReportDialog(int mercadoId) async {
-    final formKey = GlobalKey<FormState>();
-    final priceCtrl = TextEditingController();
-    String mercadoName;
-    try {
-      final mercados = await ProductoService.fetchMarkets();
-      mercadoName = mercados.firstWhere((m) => m.id == mercadoId).nombre;
-    } catch (_) {
-      mercadoName = 'Mercado $mercadoId';
-    }
-
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A2E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Color(0xFF6366F1), width: 1),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF10B981), Color(0xFF059669)],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.report, color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Reportar Precio',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Información del mercado
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF16213E).withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.store,
-                            color: Color(0xFF00FFF0),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Mercado:',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        mercadoName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Campo de precio
-                Web3NeonTextField(
-                  hintText: 'Ejemplo: 12.50',
-                  labelText: 'Precio (Bs)',
-                  controller: priceCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  prefixIcon: Icons.monetization_on,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty)
-                      return 'Ingrese un precio';
-                    final val = double.tryParse(v.replaceAll(',', '.'));
-                    if (val == null) return 'Precio inválido';
-                    if (val <= 0) return 'El precio debe ser mayor a 0';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Información adicional
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFF10B981).withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.info_outline,
-                        color: Color(0xFF10B981),
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Tu reporte ayuda a mantener actualizada la información de precios',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(color: Color(0xFF00FFF0)),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF10B981), Color(0xFF059669)],
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: TextButton(
-                onPressed: () async {
-                  if (!formKey.currentState!.validate()) return;
-                  final val = double.parse(priceCtrl.text.replaceAll(',', '.'));
-
-                  // Guardar reporte
-                  await ReporteService.addReport(
-                    _currentUserId,
-                    widget.productoId,
-                    mercadoId,
-                    val,
-                  );
-
-                  // Añadir precio a servicio de precios (simulación)
-                  final newPrecio = Precio(
-                    id: DateTime.now().millisecondsSinceEpoch.remainder(
-                      1000000,
-                    ),
-                    productoId: widget.productoId,
-                    mercadoId: mercadoId,
-                    valor: val,
-                    fechaActualizacion: DateTime.now(),
-                  );
-                  PrecioService.addPrice(newPrecio);
-
-                  Navigator.of(ctx).pop();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('¡Reporte enviado exitosamente!'),
-                        backgroundColor: Color(0xFF10B981),
-                      ),
-                    );
-                    await _load(); // Recargar datos
-                  }
-                },
-                child: const Text(
-                  'Enviar Reporte',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
           ],
         );
       },
@@ -1295,7 +1063,6 @@ class _PrecioDataSource extends DataTableSource {
   final BuildContext context;
   final String Function(DateTime) _formatDate;
   final int productoId;
-  final Future<void> Function(int mercadoId) onReport;
 
   _PrecioDataSource(
     this._precios,
@@ -1303,7 +1070,6 @@ class _PrecioDataSource extends DataTableSource {
     this.context,
     this._formatDate,
     this.productoId,
-    this.onReport,
   );
 
   String _marketName(int mercadoId) {
@@ -1327,29 +1093,18 @@ class _PrecioDataSource extends DataTableSource {
         DataCell(Text(p.valor.toStringAsFixed(2))),
         DataCell(Text(_formatDate(p.fechaActualizacion.toLocal()))),
         DataCell(
-          Row(
-            children: [
-              ElevatedButton(
-                child: const Text('Reportar'),
-                onPressed: () async {
-                  await onReport(p.mercadoId);
-                },
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                child: const Text('Ver productos'),
-                onPressed: () {
-                  // En un flujo real navegaríamos a la vista de productos filtrada por mercado
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Ver productos en ${_marketName(p.mercadoId)}',
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
+          ElevatedButton(
+            child: const Text('Ver productos'),
+            onPressed: () {
+              // En un flujo real navegaríamos a la vista de productos filtrada por mercado
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Ver todos los productos en ${_marketName(p.mercadoId)}',
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],

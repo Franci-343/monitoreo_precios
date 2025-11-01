@@ -3,7 +3,6 @@ import 'package:monitoreo_precios/services/auth_service.dart';
 import 'package:monitoreo_precios/views/register_view.dart';
 import 'package:monitoreo_precios/views/producto_view.dart';
 import 'package:monitoreo_precios/views/favoritos_view.dart';
-import 'package:monitoreo_precios/views/reporte_view.dart';
 import 'package:monitoreo_precios/views/perfil_view.dart';
 import 'package:monitoreo_precios/widgets/web3_widgets.dart';
 
@@ -343,6 +342,19 @@ class HomeAfterLogin extends StatelessWidget {
                         ),
                       ),
                       _Web3HomeCard(
+                        icon: Icons.compare_arrows,
+                        label: 'Comparar Precios',
+                        gradientColors: const [
+                          Color(0xFF06B6D4),
+                          Color(0xFF3B82F6),
+                        ],
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ProductoView(),
+                          ),
+                        ),
+                      ),
+                      _Web3HomeCard(
                         icon: Icons.favorite,
                         label: 'Mis Favoritos',
                         gradientColors: const [
@@ -352,19 +364,6 @@ class HomeAfterLogin extends StatelessWidget {
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => const FavoritosView(),
-                          ),
-                        ),
-                      ),
-                      _Web3HomeCard(
-                        icon: Icons.analytics,
-                        label: 'Reportes y Tendencias',
-                        gradientColors: const [
-                          Color(0xFF06B6D4),
-                          Color(0xFF3B82F6),
-                        ],
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const ReporteView(),
                           ),
                         ),
                       ),

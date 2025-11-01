@@ -57,3 +57,5 @@ app.*.map.json
 !build/web/assets/.env
 # Ignorar carpeta de base de datos 
 /database
+#texto para la ia
+leeme.txt
