@@ -1,2 +1,0 @@
-D:/UMSA/QUINTO_SEMESTRE/INGENIERIA_SOFTWARE/Proyecto/monitoreo_precios/build/.cxx/release/6e17434p/arm64-v8a/CMakeFiles/edit_cache.dir
-D:/UMSA/QUINTO_SEMESTRE/INGENIERIA_SOFTWARE/Proyecto/monitoreo_precios/build/.cxx/release/6e17434p/arm64-v8a/CMakeFiles/rebuild_cache.dir

@@ -1,4 +1,0 @@
-#Thu Oct 30 23:50:01 BOT 2025
-base.0=D\:\\UMSA\\QUINTO_SEMESTRE\\INGENIERIA_SOFTWARE\\Proyecto\\monitoreo_precios\\build\\app\\intermediates\\dex\\release\\minifyReleaseWithR8\\classes.dex
-path.0=classes.dex
-renamed.0=classes.dex
