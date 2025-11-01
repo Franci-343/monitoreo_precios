@@ -66,24 +66,42 @@ class _AdminProductosViewState extends State<AdminProductosView> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1F2937),
+        backgroundColor: const Color(0xFF16213E), // cardGlass
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: const Color(0xFF6366F1).withOpacity(0.3)),
+        ),
         title: const Text(
           '¿Eliminar Producto?',
           style: TextStyle(color: Colors.white),
         ),
         content: Text(
           '¿Estás seguro de eliminar "${producto.nombre}"?',
-          style: const TextStyle(color: Color(0xFF9CA3AF)),
+          style: const TextStyle(color: Color(0xFFB4B4B8)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Color(0xFFB4B4B8)),
+            ),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Eliminar'),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+              ),
+              child: const Text('Eliminar'),
+            ),
           ),
         ],
       ),
@@ -121,7 +139,14 @@ class _AdminProductosViewState extends State<AdminProductosView> {
         // Header
         Container(
           padding: const EdgeInsets.all(24),
-          color: const Color(0xFF1F2937),
+          decoration: BoxDecoration(
+            color: const Color(0xFF16213E).withOpacity(0.3),
+            border: Border(
+              bottom: BorderSide(
+                color: const Color(0xFF6366F1).withOpacity(0.3),
+              ),
+            ),
+          ),
           child: Row(
             children: [
               Expanded(
@@ -130,30 +155,54 @@ class _AdminProductosViewState extends State<AdminProductosView> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: 'Buscar productos...',
-                    hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                    hintStyle: const TextStyle(color: Color(0xFFB4B4B8)),
                     prefixIcon: const Icon(
-                      Icons.search,
-                      color: Color(0xFF9CA3AF),
+                      Icons.search_rounded,
+                      color: Color(0xFF00FFF0),
                     ),
                     filled: true,
-                    fillColor: const Color(0xFF111827),
+                    fillColor: const Color(0xFF0F0F23),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: const Color(0xFF6366F1).withOpacity(0.3),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: const Color(0xFF6366F1).withOpacity(0.3),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF00FFF0),
+                        width: 2,
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: () => _mostrarFormulario(),
-                icon: const Icon(Icons.add),
-                label: const Text('Nuevo Producto'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
+              Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ElevatedButton.icon(
+                  onPressed: () => _mostrarFormulario(),
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Nuevo Producto'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
                   ),
                 ),
               ),
@@ -164,13 +213,13 @@ class _AdminProductosViewState extends State<AdminProductosView> {
         Expanded(
           child: _isLoading
               ? const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF10B981)),
+                  child: CircularProgressIndicator(color: Color(0xFF00FFF0)),
                 )
               : _productosFiltrados.isEmpty
               ? const Center(
                   child: Text(
                     'No hay productos',
-                    style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 16),
+                    style: TextStyle(color: Color(0xFFB4B4B8), fontSize: 16),
                   ),
                 )
               : ListView.builder(
@@ -179,16 +228,33 @@ class _AdminProductosViewState extends State<AdminProductosView> {
                   itemBuilder: (context, index) {
                     final producto = _productosFiltrados[index];
                     return Card(
-                      color: const Color(0xFF1F2937),
+                      elevation: 0,
+                      color: const Color(0xFF16213E).withOpacity(0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: const Color(0xFF6366F1).withOpacity(0.3),
+                        ),
+                      ),
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: const Color(0xFF10B981),
-                          child: Text(
-                            producto.nombre[0].toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                        leading: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Text(
+                              producto.nombre[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
                             ),
                           ),
                         ),
@@ -197,29 +263,32 @@ class _AdminProductosViewState extends State<AdminProductosView> {
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
                         ),
                         subtitle: Text(
                           '${producto.categoria} • ${producto.unidadMedida ?? "unidad"}',
-                          style: const TextStyle(color: Color(0xFF9CA3AF)),
+                          style: const TextStyle(color: Color(0xFFB4B4B8)),
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
                               icon: const Icon(
-                                Icons.edit,
-                                color: Color(0xFF3B82F6),
+                                Icons.edit_rounded,
+                                color: Color(0xFF06B6D4),
                               ),
                               onPressed: () =>
                                   _mostrarFormulario(producto: producto),
+                              tooltip: 'Editar',
                             ),
                             IconButton(
                               icon: const Icon(
-                                Icons.delete,
+                                Icons.delete_rounded,
                                 color: Color(0xFFEF4444),
                               ),
                               onPressed: () => _eliminarProducto(producto),
+                              tooltip: 'Eliminar',
                             ),
                           ],
                         ),
@@ -329,10 +398,17 @@ class _FormularioProductoState extends State<_FormularioProducto> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF1F2937),
+      backgroundColor: const Color(0xFF16213E), // cardGlass
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: const Color(0xFF6366F1).withOpacity(0.3)),
+      ),
       title: Text(
         widget.producto == null ? 'Nuevo Producto' : 'Editar Producto',
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       content: Form(
         key: _formKey,
@@ -343,20 +419,62 @@ class _FormularioProductoState extends State<_FormularioProducto> {
               TextFormField(
                 controller: _nombreController,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Nombre',
-                  labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                  labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
+                  filled: true,
+                  fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF00FFF0),
+                      width: 2,
+                    ),
+                  ),
                 ),
                 validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<int>(
                 value: _categoriaSeleccionada,
-                dropdownColor: const Color(0xFF111827),
+                dropdownColor: const Color(0xFF0F0F23),
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Categoría',
-                  labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                  labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
+                  filled: true,
+                  fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF00FFF0),
+                      width: 2,
+                    ),
+                  ),
                 ),
                 items: widget.categorias.map((c) {
                   return DropdownMenuItem(value: c.id, child: Text(c.nombre));
@@ -368,9 +486,30 @@ class _FormularioProductoState extends State<_FormularioProducto> {
               TextFormField(
                 controller: _descripcionController,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Descripción (opcional)',
-                  labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                  labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
+                  filled: true,
+                  fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF00FFF0),
+                      width: 2,
+                    ),
+                  ),
                 ),
                 maxLines: 2,
               ),
@@ -378,11 +517,32 @@ class _FormularioProductoState extends State<_FormularioProducto> {
               TextFormField(
                 controller: _unidadController,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Unidad de Medida',
-                  labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                  labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
                   hintText: 'kg, litro, unidad, etc.',
-                  hintStyle: TextStyle(color: Color(0xFF6B7280)),
+                  hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+                  filled: true,
+                  fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF00FFF0),
+                      width: 2,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -392,23 +552,35 @@ class _FormularioProductoState extends State<_FormularioProducto> {
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _guardar,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF10B981),
+          child: const Text(
+            'Cancelar',
+            style: TextStyle(color: Color(0xFFB4B4B8)),
           ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text('Guardar'),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _guardar,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('Guardar'),
+          ),
         ),
       ],
     );
