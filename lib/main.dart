@@ -14,19 +14,45 @@ final supabase = Supabase.instance.client;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Cargar variables de entorno
-  print('📂 Cargando variables de entorno...');
-  await dotenv.load(fileName: ".env");
-  print('✅ Variables de entorno cargadas correctamente');
+  // Configuración de credenciales según el modo de compilación
+  String? supabaseUrl;
+  String? supabaseKey;
 
-  // Verificar que las variables existan
-  final supabaseUrl = dotenv.env['SUPABASE_URL'];
-  final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'];
+  // En modo release (APK), usar credenciales hardcodeadas
+  // En modo debug, intentar cargar desde .env
+  const isRelease = bool.fromEnvironment('dart.vm.product');
 
-  if (supabaseUrl == null || supabaseKey == null) {
-    print('❌ ERROR: Faltan credenciales de Supabase en .env');
-    print('   SUPABASE_URL: ${supabaseUrl != null ? "✓" : "✗"}');
-    print('   SUPABASE_ANON_KEY: ${supabaseKey != null ? "✓" : "✗"}');
+  if (isRelease) {
+    // Modo RELEASE: Credenciales de producción
+    print('📱 Modo RELEASE: Usando credenciales hardcodeadas');
+    supabaseUrl = 'https://ngxpkwvyceineasuigxz.supabase.co';
+    supabaseKey =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5neHBrd3Z5Y2VpbmVhc3VpZ3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5MDkzNDcsImV4cCI6MjA3NzQ4NTM0N30.aZV7IWgIhwk3D0Mnhb4SR-BbOJ9ZRQPDDffTTBQVmhM';
+  } else {
+    // Modo debug: cargar desde .env
+    print('💻 Modo DEBUG: Cargando variables de entorno...');
+    await dotenv.load(fileName: ".env");
+    print('✅ Variables de entorno cargadas correctamente');
+
+    supabaseUrl = dotenv.env['SUPABASE_URL'];
+    supabaseKey = dotenv.env['SUPABASE_ANON_KEY'];
+  }
+
+  if (supabaseUrl == null ||
+      supabaseKey == null ||
+      supabaseUrl == 'TU_SUPABASE_URL_AQUI' ||
+      supabaseKey == 'TU_SUPABASE_ANON_KEY_AQUI') {
+    print('❌ ERROR: Faltan credenciales de Supabase');
+    print(
+      '   SUPABASE_URL: ${supabaseUrl != null && supabaseUrl != 'TU_SUPABASE_URL_AQUI' ? "✓" : "✗"}',
+    );
+    print(
+      '   SUPABASE_ANON_KEY: ${supabaseKey != null && supabaseKey != 'TU_SUPABASE_ANON_KEY_AQUI' ? "✓" : "✗"}',
+    );
+    print('');
+    print(
+      '⚠️  Para APK release: Edita lib/main.dart líneas 19-20 con tus credenciales',
+    );
     return;
   }
 

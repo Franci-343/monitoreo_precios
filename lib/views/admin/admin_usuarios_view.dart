@@ -106,20 +106,11 @@ class _AdminUsuariosViewState extends State<AdminUsuariosView> {
 
     if (confirmar == true) {
       try {
-        // Eliminar de usuarios (CASCADE eliminará favoritos, reportes, alertas)
-        await supabase.from('usuarios').delete().eq('id', usuario.id);
-
-        // Eliminar de auth.users requiere privilegios especiales
-        // Se recomienda usar una función de Supabase con SECURITY DEFINER
-        try {
-          await supabase.rpc(
-            'eliminar_cuenta_usuario_admin',
-            params: {'user_id': usuario.id},
-          );
-        } catch (e) {
-          // Si no existe la función, solo se elimina de usuarios
-          print('Advertencia: No se pudo eliminar de auth.users: $e');
-        }
+        // Usar la función RPC que elimina de usuarios Y auth.users
+        await supabase.rpc(
+          'eliminar_cuenta_usuario_admin',
+          params: {'user_id': usuario.id},
+        );
 
         _cargarUsuarios();
         if (mounted) {
@@ -133,7 +124,11 @@ class _AdminUsuariosViewState extends State<AdminUsuariosView> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text('Error al eliminar usuario: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
           );
         }
       }
@@ -196,17 +191,265 @@ class _AdminUsuariosViewState extends State<AdminUsuariosView> {
     );
 
     if (confirmar == true) {
-      // Aquí guardaríamos en una tabla de roles o metadata
-      // Por simplicidad, mostramos mensaje
+      // Mostrar instrucciones de cómo hacer admin
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Función de administrador ${esAdmin ? "removida" : "otorgada"}. '
-              'Nota: Actualiza AdminService para que use email: ${usuario.email}',
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF16213E),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: const Color(0xFF6366F1).withOpacity(0.3)),
             ),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 5),
+            title: Row(
+              children: [
+                Icon(
+                  esAdmin ? Icons.remove_circle : Icons.add_circle,
+                  color: esAdmin
+                      ? const Color(0xFFEF4444)
+                      : const Color(0xFF00FFF0),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    esAdmin ? 'Quitar Admin' : 'Hacer Admin',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (esAdmin) ...[
+                    const Text(
+                      'Para quitar permisos de administrador a este usuario:',
+                      style: TextStyle(color: Color(0xFFB4B4B8)),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '1. Abre el archivo:',
+                      style: TextStyle(
+                        color: Color(0xFFB4B4B8),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F0F23),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'lib/services/admin_service.dart',
+                        style: TextStyle(
+                          color: Color(0xFF00FFF0),
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '2. Cambia la línea:',
+                      style: TextStyle(
+                        color: Color(0xFFB4B4B8),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F0F23),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "static const String adminEmail = '${usuario.email}';",
+                        style: const TextStyle(
+                          color: Color(0xFFEF4444),
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Por:',
+                      style: TextStyle(color: Color(0xFFB4B4B8)),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F0F23),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        "static const String adminEmail = 'otro@email.com';",
+                        style: TextStyle(
+                          color: Color(0xFF10B981),
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    const Text(
+                      'Para dar permisos de administrador a este usuario:',
+                      style: TextStyle(color: Color(0xFFB4B4B8)),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '1. Abre el archivo:',
+                      style: TextStyle(
+                        color: Color(0xFFB4B4B8),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F0F23),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'lib/services/admin_service.dart',
+                        style: TextStyle(
+                          color: Color(0xFF00FFF0),
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '2. Cambia la línea:',
+                      style: TextStyle(
+                        color: Color(0xFFB4B4B8),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F0F23),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        "static const String adminEmail = 'fa8050386@gmail.com';",
+                        style: TextStyle(
+                          color: Color(0xFFEF4444),
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Por:',
+                      style: TextStyle(color: Color(0xFFB4B4B8)),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F0F23),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "static const String adminEmail = '${usuario.email}';",
+                        style: const TextStyle(
+                          color: Color(0xFF10B981),
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '3. Ejecuta en la base de datos:',
+                      style: TextStyle(
+                        color: Color(0xFFB4B4B8),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F0F23),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "Actualiza fix_admin_usuarios.sql\nreemplazando 'fa8050386@gmail.com'\npor '${usuario.email}'",
+                        style: const TextStyle(
+                          color: Color(0xFFF59E0B),
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFFF59E0B).withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          color: Color(0xFFF59E0B),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Nota: Requiere modificación de código y base de datos.',
+                            style: TextStyle(
+                              color: Color(0xFFF59E0B),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ElevatedButton(
+                  onPressed: () =>
+                      Navigator.of(context, rootNavigator: true).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                  ),
+                  child: const Text('Entendido'),
+                ),
+              ),
+            ],
           ),
         );
       }
@@ -688,31 +931,132 @@ class _FormularioUsuarioState extends State<_FormularioUsuario> {
 
     try {
       if (widget.usuario == null) {
-        // Crear nuevo usuario en auth.users
-        final authResponse = await supabase.auth.signUp(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-
-        if (authResponse.user == null) {
-          throw 'No se pudo crear el usuario';
+        // CREAR NUEVO USUARIO
+        // Nota: No podemos usar signUp() porque cerraría la sesión del admin
+        // En su lugar, mostramos instrucciones al usuario
+        setState(() => _isLoading = false);
+        if (mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+          await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: const Color(0xFF16213E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: const Color(0xFF6366F1).withOpacity(0.3),
+                ),
+              ),
+              title: const Text(
+                'Crear Usuario',
+                style: TextStyle(color: Colors.white),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Para crear un nuevo usuario, el usuario debe registrarse normalmente en la aplicación usando:',
+                      style: TextStyle(color: Color(0xFFB4B4B8)),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F0F23),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFF6366F1).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.email_rounded,
+                                color: Color(0xFF00FFF0),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _emailController.text.trim(),
+                                  style: const TextStyle(
+                                    color: Color(0xFF00FFF0),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.lock_rounded,
+                                color: Color(0xFF00FFF0),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _passwordController.text.trim(),
+                                  style: const TextStyle(
+                                    color: Color(0xFF00FFF0),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Comparte estas credenciales con el nuevo usuario para que pueda registrarse.',
+                      style: TextStyle(color: Color(0xFFB4B4B8), fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Nota: Por limitaciones de Supabase, no es posible crear usuarios directamente desde el panel de administrador sin usar una API de servidor.',
+                      style: TextStyle(
+                        color: Color(0xFFF59E0B),
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () =>
+                        Navigator.of(context, rootNavigator: true).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                    ),
+                    child: const Text('Entendido'),
+                  ),
+                ),
+              ],
+            ),
+          );
         }
-
-        // Actualizar perfil con datos adicionales
-        await supabase
-            .from('usuarios')
-            .update({
-              'nombre': _nombreController.text.trim(),
-              'telefono': _telefonoController.text.trim().isEmpty
-                  ? null
-                  : _telefonoController.text.trim(),
-              'zona_preferida': _zonaController.text.trim().isEmpty
-                  ? null
-                  : _zonaController.text.trim(),
-            })
-            .eq('id', authResponse.user!.id);
+        return;
       } else {
-        // Actualizar usuario existente
+        // ACTUALIZAR USUARIO EXISTENTE
         await supabase
             .from('usuarios')
             .update({
@@ -725,18 +1069,17 @@ class _FormularioUsuarioState extends State<_FormularioUsuario> {
                   : _zonaController.text.trim(),
             })
             .eq('id', widget.usuario!.id);
-      }
 
-      if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.usuario == null ? 'Usuario creado' : 'Usuario actualizado',
+        setState(() => _isLoading = false);
+        if (mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Usuario actualizado correctamente'),
+              backgroundColor: Colors.green,
             ),
-            backgroundColor: Colors.green,
-          ),
-        );
+          );
+        }
       }
     } catch (e) {
       setState(() => _isLoading = false);
