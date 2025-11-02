@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:monitoreo_precios/models/producto_model.dart';
 import 'package:monitoreo_precios/models/categoria_model.dart';
+import 'package:monitoreo_precios/models/mercado_model.dart';
 import 'package:monitoreo_precios/services/producto_service.dart';
 import 'package:monitoreo_precios/main.dart';
 
@@ -109,10 +111,7 @@ class _AdminProductosViewState extends State<AdminProductosView> {
 
     if (confirmar == true) {
       try {
-        await supabase
-            .from('productos')
-            .update({'activo': false})
-            .eq('id', producto.id);
+        await supabase.from('productos').delete().eq('id', producto.id);
         _cargarDatos();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -324,6 +323,11 @@ class _FormularioProductoState extends State<_FormularioProducto> {
   int? _categoriaSeleccionada;
   bool _isLoading = false;
 
+  // Para gestión de precios
+  List<Mercado> _mercados = [];
+  List<Map<String, dynamic>> _preciosIniciales = [];
+  int _currentStep = 0;
+
   @override
   void initState() {
     super.initState();
@@ -333,6 +337,48 @@ class _FormularioProductoState extends State<_FormularioProducto> {
       text: widget.producto?.unidadMedida ?? 'unidad',
     );
     _categoriaSeleccionada = widget.producto?.categoriaId;
+    _cargarMercados();
+  }
+
+  Future<void> _cargarMercados() async {
+    try {
+      final response = await supabase
+          .from('mercados')
+          .select('*')
+          .eq('activo', true)
+          .order('nombre');
+      setState(() {
+        _mercados = (response as List)
+            .map((json) => Mercado.fromMap(json))
+            .toList();
+      });
+    } catch (e) {
+      // Silently fail, user can add prices later
+    }
+  }
+
+  void _agregarPrecio() {
+    showDialog(
+      context: context,
+      builder: (context) => _DialogoAgregarPrecio(
+        mercados: _mercados,
+        onAgregar: (mercadoId, mercadoNombre, precio) {
+          setState(() {
+            _preciosIniciales.add({
+              'mercado_id': mercadoId,
+              'mercado_nombre': mercadoNombre,
+              'precio': precio,
+            });
+          });
+        },
+      ),
+    );
+  }
+
+  void _eliminarPrecio(int index) {
+    setState(() {
+      _preciosIniciales.removeAt(index);
+    });
   }
 
   Future<void> _guardar() async {
@@ -351,14 +397,29 @@ class _FormularioProductoState extends State<_FormularioProducto> {
 
     try {
       if (widget.producto == null) {
-        // Crear
-        await supabase.from('productos').insert({
+        // Crear producto
+        final response = await supabase.from('productos').insert({
           'nombre': _nombreController.text.trim(),
           'categoria_id': _categoriaSeleccionada,
           'descripcion': _descripcionController.text.trim(),
           'unidad_medida': _unidadController.text.trim(),
           'activo': true,
-        });
+        }).select();
+
+        final productoId = response[0]['id'];
+
+        // Insertar precios iniciales
+        if (_preciosIniciales.isNotEmpty) {
+          for (var precio in _preciosIniciales) {
+            await supabase.from('precios').insert({
+              'producto_id': productoId,
+              'mercado_id': precio['mercado_id'],
+              'precio': precio['precio'],
+              'verificado': true,
+              'usuario_reporto_id': supabase.auth.currentUser?.id,
+            });
+          }
+        }
       } else {
         // Actualizar
         await supabase
@@ -373,15 +434,21 @@ class _FormularioProductoState extends State<_FormularioProducto> {
       }
 
       if (mounted) {
-        Navigator.pop(context);
+        setState(() => _isLoading = false);
+
+        // Usar rootNavigator para cerrar el diálogo correctamente
+        Navigator.of(context, rootNavigator: true).pop();
+
+        // Mostrar mensaje de éxito
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               widget.producto == null
-                  ? 'Producto creado'
+                  ? 'Producto creado con ${_preciosIniciales.length} precios'
                   : 'Producto actualizado',
             ),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -389,7 +456,11 @@ class _FormularioProductoState extends State<_FormularioProducto> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
@@ -398,191 +469,447 @@ class _FormularioProductoState extends State<_FormularioProducto> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF16213E), // cardGlass
+      backgroundColor: const Color(0xFF16213E),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: const Color(0xFF6366F1).withOpacity(0.3)),
       ),
-      title: Text(
-        widget.producto == null ? 'Nuevo Producto' : 'Editar Producto',
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              widget.producto == null
+                  ? Icons.add_shopping_cart_rounded
+                  : Icons.edit_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              widget.producto == null ? 'Nuevo Producto' : 'Editar Producto',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: 600,
+        child: Stepper(
+          currentStep: _currentStep,
+          onStepContinue: () {
+            if (_currentStep == 0) {
+              if (_formKey.currentState!.validate() &&
+                  _categoriaSeleccionada != null) {
+                setState(() => _currentStep = 1);
+              } else if (_categoriaSeleccionada == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Selecciona una categoría'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }
+            } else {
+              _guardar();
+            }
+          },
+          onStepCancel: () {
+            if (_currentStep > 0) {
+              setState(() => _currentStep -= 1);
+            } else {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
+          },
+          controlsBuilder: (context, details) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : details.onStepContinue,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(_currentStep == 1 ? 'Guardar' : 'Siguiente'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  TextButton(
+                    onPressed: _isLoading ? null : details.onStepCancel,
+                    child: Text(
+                      _currentStep == 0 ? 'Cancelar' : 'Atrás',
+                      style: const TextStyle(color: Color(0xFFB4B4B8)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+          steps: [
+            Step(
+              title: const Text(
+                'Información del Producto',
+                style: TextStyle(color: Colors.white),
+              ),
+              content: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _nombreController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Nombre',
+                        labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
+                        prefixIcon: const Icon(
+                          Icons.shopping_bag_rounded,
+                          color: Color(0xFF6366F1),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: const Color(0xFF6366F1).withOpacity(0.3),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: const Color(0xFF6366F1).withOpacity(0.3),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF00FFF0),
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Requerido' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<int>(
+                      value: _categoriaSeleccionada,
+                      dropdownColor: const Color(0xFF0F0F23),
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Categoría',
+                        labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
+                        prefixIcon: const Icon(
+                          Icons.category_rounded,
+                          color: Color(0xFF6366F1),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: const Color(0xFF6366F1).withOpacity(0.3),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: const Color(0xFF6366F1).withOpacity(0.3),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF00FFF0),
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      items: widget.categorias.map((c) {
+                        return DropdownMenuItem(
+                          value: c.id,
+                          child: Text(c.nombre),
+                        );
+                      }).toList(),
+                      onChanged: (value) =>
+                          setState(() => _categoriaSeleccionada = value),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _descripcionController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Descripción (opcional)',
+                        labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
+                        prefixIcon: const Icon(
+                          Icons.description_rounded,
+                          color: Color(0xFF6366F1),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: const Color(0xFF6366F1).withOpacity(0.3),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: const Color(0xFF6366F1).withOpacity(0.3),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF00FFF0),
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _unidadController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Unidad de Medida',
+                        labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
+                        hintText: 'kg, litro, unidad, etc.',
+                        hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+                        prefixIcon: const Icon(
+                          Icons.straighten_rounded,
+                          color: Color(0xFF6366F1),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: const Color(0xFF6366F1).withOpacity(0.3),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: const Color(0xFF6366F1).withOpacity(0.3),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF00FFF0),
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              isActive: _currentStep >= 0,
+              state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+            ),
+            Step(
+              title: const Text(
+                'Precios Iniciales (Opcional)',
+                style: TextStyle(color: Colors.white),
+              ),
+              subtitle: widget.producto != null
+                  ? const Text(
+                      'Solo al crear productos nuevos',
+                      style: TextStyle(color: Color(0xFFB4B4B8), fontSize: 12),
+                    )
+                  : null,
+              content: widget.producto != null
+                  ? const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text(
+                        'La gestión de precios para productos existentes se hace desde la sección "Precios" del panel de administración.',
+                        style: TextStyle(
+                          color: Color(0xFFB4B4B8),
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF06B6D4).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF06B6D4).withOpacity(0.3),
+                            ),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                color: Color(0xFF06B6D4),
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Agrega precios en diferentes mercados (opcional)',
+                                  style: TextStyle(
+                                    color: Color(0xFF06B6D4),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _agregarPrecio,
+                            icon: const Icon(
+                              Icons.add_rounded,
+                              color: Color(0xFF00FFF0),
+                            ),
+                            label: const Text(
+                              'Agregar Precio',
+                              style: TextStyle(color: Color(0xFF00FFF0)),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF00FFF0)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (_preciosIniciales.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.shopping_cart_outlined,
+                                    size: 48,
+                                    color: const Color(
+                                      0xFFB4B4B8,
+                                    ).withOpacity(0.5),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Sin precios agregados',
+                                    style: TextStyle(
+                                      color: Color(0xFFB4B4B8),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          ..._preciosIniciales.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final precio = entry.value;
+                            return Card(
+                              color: const Color(0xFF0F0F23).withOpacity(0.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: const Color(
+                                    0xFF6366F1,
+                                  ).withOpacity(0.3),
+                                ),
+                              ),
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                leading: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF06B6D4),
+                                        Color(0xFF3B82F6),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.store_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                title: Text(
+                                  precio['mercado_nombre'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  'Bs. ${precio['precio'].toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF00FFF0),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_rounded,
+                                    color: Color(0xFFEF4444),
+                                    size: 20,
+                                  ),
+                                  onPressed: () => _eliminarPrecio(index),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                      ],
+                    ),
+              isActive: _currentStep >= 1,
+              state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+            ),
+          ],
         ),
       ),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _nombreController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Nombre',
-                  labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
-                  filled: true,
-                  fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF00FFF0),
-                      width: 2,
-                    ),
-                  ),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<int>(
-                value: _categoriaSeleccionada,
-                dropdownColor: const Color(0xFF0F0F23),
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Categoría',
-                  labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
-                  filled: true,
-                  fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF00FFF0),
-                      width: 2,
-                    ),
-                  ),
-                ),
-                items: widget.categorias.map((c) {
-                  return DropdownMenuItem(value: c.id, child: Text(c.nombre));
-                }).toList(),
-                onChanged: (value) =>
-                    setState(() => _categoriaSeleccionada = value),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descripcionController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Descripción (opcional)',
-                  labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
-                  filled: true,
-                  fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF00FFF0),
-                      width: 2,
-                    ),
-                  ),
-                ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _unidadController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Unidad de Medida',
-                  labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
-                  hintText: 'kg, litro, unidad, etc.',
-                  hintStyle: const TextStyle(color: Color(0xFF6B7280)),
-                  filled: true,
-                  fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF00FFF0),
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: const Text(
-            'Cancelar',
-            style: TextStyle(color: Color(0xFFB4B4B8)),
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _guardar,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text('Guardar'),
-          ),
-        ),
-      ],
     );
   }
 
@@ -591,6 +918,204 @@ class _FormularioProductoState extends State<_FormularioProducto> {
     _nombreController.dispose();
     _descripcionController.dispose();
     _unidadController.dispose();
+    super.dispose();
+  }
+}
+
+// ============================================
+// DIALOGO AGREGAR PRECIO
+// ============================================
+
+class _DialogoAgregarPrecio extends StatefulWidget {
+  final List<Mercado> mercados;
+  final Function(int mercadoId, String mercadoNombre, double precio) onAgregar;
+
+  const _DialogoAgregarPrecio({
+    required this.mercados,
+    required this.onAgregar,
+  });
+
+  @override
+  State<_DialogoAgregarPrecio> createState() => _DialogoAgregarPrecioState();
+}
+
+class _DialogoAgregarPrecioState extends State<_DialogoAgregarPrecio> {
+  final _formKey = GlobalKey<FormState>();
+  final _precioController = TextEditingController();
+  Mercado? _mercadoSeleccionado;
+
+  void _agregar() {
+    if (!_formKey.currentState!.validate() || _mercadoSeleccionado == null) {
+      if (_mercadoSeleccionado == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Selecciona un mercado'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    final precio = double.tryParse(_precioController.text.trim());
+    if (precio == null || precio <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Precio inválido'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    widget.onAgregar(
+      _mercadoSeleccionado!.id,
+      _mercadoSeleccionado!.nombre,
+      precio,
+    );
+    Navigator.of(context, rootNavigator: true).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF16213E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: const Color(0xFF6366F1).withOpacity(0.3)),
+      ),
+      title: const Row(
+        children: [
+          Icon(Icons.attach_money_rounded, color: Color(0xFF00FFF0)),
+          SizedBox(width: 12),
+          Text(
+            'Agregar Precio',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<Mercado>(
+              value: _mercadoSeleccionado,
+              dropdownColor: const Color(0xFF0F0F23),
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Mercado',
+                labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
+                prefixIcon: const Icon(
+                  Icons.store_rounded,
+                  color: Color(0xFF6366F1),
+                ),
+                filled: true,
+                fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: const Color(0xFF6366F1).withOpacity(0.3),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: const Color(0xFF6366F1).withOpacity(0.3),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF00FFF0),
+                    width: 2,
+                  ),
+                ),
+              ),
+              items: widget.mercados.map((m) {
+                return DropdownMenuItem(
+                  value: m,
+                  child: Text('${m.nombre} - ${m.zona}'),
+                );
+              }).toList(),
+              onChanged: (value) =>
+                  setState(() => _mercadoSeleccionado = value),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _precioController,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Precio (Bs)',
+                labelStyle: const TextStyle(color: Color(0xFFB4B4B8)),
+                prefixIcon: const Icon(
+                  Icons.attach_money_rounded,
+                  color: Color(0xFF6366F1),
+                ),
+                filled: true,
+                fillColor: const Color(0xFF0F0F23).withOpacity(0.5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: const Color(0xFF6366F1).withOpacity(0.3),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: const Color(0xFF6366F1).withOpacity(0.3),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF00FFF0),
+                    width: 2,
+                  ),
+                ),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Requerido';
+                final precio = double.tryParse(v);
+                if (precio == null || precio <= 0) return 'Precio inválido';
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+          child: const Text(
+            'Cancelar',
+            style: TextStyle(color: Color(0xFFB4B4B8)),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF06B6D4), Color(0xFF3B82F6)],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ElevatedButton(
+            onPressed: _agregar,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+            ),
+            child: const Text('Agregar'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _precioController.dispose();
     super.dispose();
   }
 }

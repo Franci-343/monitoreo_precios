@@ -728,7 +728,7 @@ class _FormularioUsuarioState extends State<_FormularioUsuario> {
       }
 
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -819,7 +819,9 @@ class _FormularioUsuarioState extends State<_FormularioUsuario> {
       ),
       actions: [
         TextButton(
-          onPressed: _isLoading ? null : () => Navigator.pop(context),
+          onPressed: _isLoading
+              ? null
+              : () => Navigator.of(context, rootNavigator: true).pop(),
           child: const Text(
             'Cancelar',
             style: TextStyle(color: Color(0xFFB4B4B8)),
