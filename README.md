@@ -22,6 +22,73 @@ Aplicación móvil y web para comparar precios de productos en mercados y superm
 
 ## 📂 Estructura del Proyecto
 
+```
+monitoreo_precios/
+├── lib/
+│   ├── main.dart                          # Punto de entrada, configuración Supabase y tema
+│   ├── models/
+│   │   ├── alerta_model.dart              # Modelo de alertas de precios
+│   │   ├── categoria_model.dart           # Modelo de categorías de productos
+│   │   ├── favorito_model.dart            # Modelo de productos favoritos
+│   │   ├── mercado_model.dart             # Modelo de mercados/supermercados
+│   │   ├── precio_model.dart              # Modelo de precios
+│   │   ├── producto_model.dart            # Modelo de productos
+│   │   ├── reporte_model.dart             # Modelo de reportes de usuarios
+│   │   └── usuario_model.dart             # Modelo de perfil de usuario
+│   ├── services/
+│   │   ├── admin_service.dart             # Lógica de administrador
+│   │   ├── alert_service.dart             # Gestión de alertas
+│   │   ├── auth_service.dart              # Autenticación (login/registro)
+│   │   ├── favorito_service.dart          # Gestión de favoritos
+│   │   ├── historial_service.dart         # Historial de búsquedas
+│   │   ├── precio_service.dart            # Consultas de precios
+│   │   ├── producto_service.dart          # CRUD de productos
+│   │   └── reporte_service.dart           # Sistema de reportes
+│   ├── views/
+│   │   ├── home_view.dart                 # Pantalla principal
+│   │   ├── login_view.dart                # Inicio de sesión
+│   │   ├── register_view.dart             # Registro de usuarios
+│   │   ├── perfil_view.dart               # Perfil del usuario
+│   │   ├── producto_view.dart             # Detalles de producto
+│   │   ├── comparador_view.dart           # Comparar precios
+│   │   ├── comparar_mercados_view.dart    # Comparar mercados
+│   │   ├── donde_encontrar_view.dart      # Mapa de mercados
+│   │   ├── precio_tendencia_view.dart     # Tendencias de precios
+│   │   ├── favoritos_view.dart            # Lista de favoritos
+│   │   ├── historial_view.dart            # Historial de búsquedas
+│   │   ├── alertas_view.dart              # Gestión de alertas
+│   │   ├── reporte_view.dart              # Reportar precios
+│   │   └── admin/
+│   │       ├── admin_panel_view.dart      # Panel principal admin
+│   │       ├── admin_productos_view.dart  # CRUD productos
+│   │       ├── admin_mercados_view.dart   # CRUD mercados
+│   │       ├── admin_categorias_view.dart # CRUD categorías
+│   │       ├── admin_usuarios_view.dart   # Gestión usuarios
+│   │       └── admin_reportes_view.dart   # Revisar reportes
+│   ├── widgets/
+│   │   ├── alerta_banner.dart             # Banner de alertas
+│   │   ├── avatar_selector.dart           # Selector de avatar
+│   │   ├── loading_indicador.dart         # Indicador de carga
+│   │   ├── mercado_selector.dart          # Selector de mercados
+│   │   ├── precio_table.dart              # Tabla de precios
+│   │   ├── producto_card.dart             # Tarjeta de producto
+│   │   └── web3_widgets.dart              # Widgets glassmorphism
+│   └── routes/
+│       └── app_routes.dart                # Configuración de rutas
+├── android/
+│   └── app/src/main/
+│       └── AndroidManifest.xml            # Permisos Android
+├── web/
+│   ├── index.html                         # HTML principal
+│   └── manifest.json                      # Configuración PWA
+├── pubspec.yaml                           # Dependencias del proyecto
+├── vercel.json                            # Configuración Vercel
+├── .env                                   # Variables de entorno
+└── README.md                              # Este archivo
+```
+
+### Descripción de Carpetas
+
 ### `/lib` - Código Principal
 
 #### `/lib/models` - Modelos de Datos
@@ -192,10 +259,6 @@ Este proyecto es de código abierto para fines educativos.
 
 ## 👨‍💻 Desarrollador
 
-**Francisco Tapia**  
-Ingeniería de Software - UMSA  
+**Franco Mario Ayala Quispe**  
+Informatica - UMSA  
 La Paz, Bolivia
-
----
-
-**⭐ Si te gusta el proyecto, dale una estrella en GitHub!**
