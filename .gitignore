@@ -55,7 +55,26 @@ app.*.map.json
 # Permitir .env en build/web para Vercel
 !build/web/.env
 !build/web/assets/.env
-# Ignorar carpeta de base de datos 
+
+# Ignorar carpeta de base de datos y documentación interna
 database/
-#texto para la ia
+
+# Archivos de texto e instrucciones internas
 leeme.txt
+*.md
+!README.md
+!LICENSE.md
+
+# Scripts batch y archivos de desarrollo
+*.bat
+fix_*.dart
+revertir_*.bat
+build_*.bat
+
+# Archivos de documentación de mejoras internas
+ADMIN_PANEL.md
+DEPLOY_VERCEL.md
+MEJORA_*.md
+NUEVO_*.md
+SOLUCION_*.md
+INSTRUCCIONES_*.md
