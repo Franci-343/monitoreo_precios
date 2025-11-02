@@ -192,7 +192,7 @@ Este proyecto es de código abierto para fines educativos.
 
 ## 👨‍💻 Desarrollador
 
-**Francisco Tapia**  
+**Franco Mario Ayala Quispe**  
 Ingeniería de Software - UMSA  
 La Paz, Bolivia
 
