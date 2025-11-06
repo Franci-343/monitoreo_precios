@@ -65,6 +65,12 @@ leeme.txt
 !README.md
 !LICENSE.md
 
+# Manual técnico (no incluir en Git, solo mantener localmente)
+MANUAL_TECNICO.txt
+
+# Análisis de costos
+ANALISIS_COSMIC_CFP.txt
+
 # Scripts batch y archivos de desarrollo
 *.bat
 fix_*.dart

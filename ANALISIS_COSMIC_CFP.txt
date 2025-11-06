@@ -1,0 +1,409 @@
+================================================================================
+  ANÁLISIS DE COSTOS - MÉTODO COSMIC CFP
+  Sistema de Monitoreo de Precios La Paz
+  Fecha: 02/11/2025
+================================================================================
+
+MÉTODO COSMIC (Common Software Measurement International Consortium)
+---------------------------------------------------------------------
+El método COSMIC mide el tamaño funcional del software basándose en
+movimientos de datos:
+- E (Entry): Entrada de datos desde el usuario
+- X (Exit): Salida de datos hacia el usuario
+- R (Read): Lectura de datos persistentes
+- W (Write): Escritura de datos persistentes
+
+Cada movimiento de datos = 1 CFP (COSMIC Function Point)
+
+================================================================================
+ANÁLISIS DETALLADO POR PROCESO FUNCIONAL
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 1. GESTIÓN DE USUARIOS Y AUTENTICACIÓN                                  │
+└──────────────────────────────────────────────────────────────────────────┘
+
+1.1 Proceso: Registro de Usuario
+    Archivo: lib/views/register_view.dart, lib/services/auth_service.dart
+    E: nombre, correo, contraseña, confirmación contraseña           = 4 CFP
+    W: guardar usuario en auth.users                                 = 1 CFP
+    W: guardar perfil en tabla usuarios                              = 1 CFP
+    X: mensaje de confirmación/error                                 = 1 CFP
+    Total: 7 CFP
+
+1.2 Proceso: Inicio de Sesión
+    Archivo: lib/views/login_view.dart, lib/services/auth_service.dart
+    E: correo, contraseña                                            = 2 CFP
+    R: verificar credenciales                                        = 1 CFP
+    X: redirigir a home/mostrar error                                = 1 CFP
+    Total: 4 CFP
+
+1.3 Proceso: Cierre de Sesión
+    Archivo: lib/services/auth_service.dart
+    E: acción de logout                                              = 1 CFP
+    W: eliminar sesión                                               = 1 CFP
+    X: redirigir a login                                             = 1 CFP
+    Total: 3 CFP
+
+1.4 Proceso: Actualizar Perfil de Usuario
+    Archivo: lib/views/perfil_view.dart
+    E: nombre, teléfono, zona_preferida, avatar                      = 4 CFP
+    R: cargar datos actuales del usuario                             = 1 CFP
+    W: actualizar tabla usuarios                                     = 1 CFP
+    X: mensaje de confirmación                                       = 1 CFP
+    Total: 7 CFP
+
+1.5 Proceso: Eliminar Cuenta
+    Archivo: lib/views/perfil_view.dart, database/eliminar_cuenta_function.sql
+    E: confirmación de eliminación                                   = 1 CFP
+    R: verificar usuario                                             = 1 CFP
+    W: eliminar favoritos del usuario                                = 1 CFP
+    W: eliminar reportes del usuario                                 = 1 CFP
+    W: eliminar alertas del usuario                                  = 1 CFP
+    W: eliminar perfil                                               = 1 CFP
+    W: eliminar cuenta auth                                          = 1 CFP
+    X: mensaje de confirmación                                       = 1 CFP
+    Total: 8 CFP
+
+SUBTOTAL GESTIÓN DE USUARIOS: 29 CFP
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 2. GESTIÓN DE PRODUCTOS                                                 │
+└──────────────────────────────────────────────────────────────────────────┘
+
+2.1 Proceso: Consulta de Productos con Filtros
+    Archivo: lib/views/producto_view.dart, lib/services/producto_service.dart
+    E: búsqueda por nombre                                           = 1 CFP
+    E: filtro por categoría                                          = 1 CFP
+    E: filtro por mercado                                            = 1 CFP
+    R: leer productos de BD                                          = 1 CFP
+    R: leer categorías disponibles                                   = 1 CFP
+    R: leer mercados disponibles                                     = 1 CFP
+    R: leer precios asociados                                        = 1 CFP
+    X: mostrar lista de productos con precios                        = 1 CFP
+    Total: 8 CFP
+
+2.2 Proceso: Ver Detalle de Producto
+    Archivo: lib/views/producto_view.dart
+    E: selección de producto                                         = 1 CFP
+    R: leer información del producto                                 = 1 CFP
+    R: leer precios por mercado                                      = 1 CFP
+    X: mostrar detalles completos                                    = 1 CFP
+    Total: 4 CFP
+
+2.3 Proceso: Comparador de Precios (Vista Tabular)
+    Archivo: lib/views/comparador_view.dart
+    E: selección de producto                                         = 1 CFP
+    E: ordenamiento (por precio, mercado, fecha)                     = 1 CFP
+    R: leer todos los precios del producto                           = 1 CFP
+    R: leer información de mercados                                  = 1 CFP
+    X: mostrar tabla ordenada con paginación                         = 1 CFP
+    X: mostrar fecha de actualización por precio                     = 1 CFP
+    Total: 6 CFP
+
+2.4 Proceso: Comparar Precios entre Mercados
+    Archivo: lib/views/comparar_mercados_view.dart
+    E: selección de producto                                         = 1 CFP
+    E: selección de mercados a comparar                              = 1 CFP
+    R: leer precios de mercados seleccionados                        = 1 CFP
+    X: mostrar comparación visual                                    = 1 CFP
+    Total: 4 CFP
+
+2.5 Proceso: Ver Dónde Encontrar Producto Más Barato
+    Archivo: lib/views/donde_encontrar_view.dart
+    E: selección de producto                                         = 1 CFP
+    R: leer todos los precios del producto                           = 1 CFP
+    R: leer ubicaciones de mercados                                  = 1 CFP
+    X: mostrar mercado más barato con ubicación                      = 1 CFP
+    Total: 4 CFP
+
+SUBTOTAL GESTIÓN DE PRODUCTOS: 26 CFP
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 3. GESTIÓN DE PRECIOS Y REPORTES                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+3.1 Proceso: Reportar Precio (Usuario)
+    Archivo: lib/views/reporte_view.dart, lib/services/reporte_service.dart
+    E: selección de producto                                         = 1 CFP
+    E: selección de mercado                                          = 1 CFP
+    E: precio ingresado                                              = 1 CFP
+    E: unidad de medida                                              = 1 CFP
+    W: guardar reporte en tabla reportes                             = 1 CFP
+    X: mensaje de confirmación                                       = 1 CFP
+    Total: 6 CFP
+
+3.2 Proceso: Ver Mis Reportes
+    Archivo: lib/views/reporte_view.dart
+    R: leer reportes del usuario                                     = 1 CFP
+    R: leer productos asociados                                      = 1 CFP
+    R: leer mercados asociados                                       = 1 CFP
+    X: mostrar lista de reportes                                     = 1 CFP
+    Total: 4 CFP
+
+3.3 Proceso: Gráficos de Tendencias de Precios
+    Archivo: lib/views/precio_tendencia_view.dart, lib/services/precio_service.dart
+    E: selección de producto                                         = 1 CFP
+    E: rango de fechas (opcional)                                    = 1 CFP
+    R: leer historial de precios                                     = 1 CFP
+    R: leer mercados                                                 = 1 CFP
+    X: mostrar gráfico de tendencias                                 = 1 CFP
+    X: mostrar estadísticas (promedio, min, max)                     = 1 CFP
+    Total: 6 CFP
+
+SUBTOTAL GESTIÓN DE PRECIOS: 16 CFP
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 4. GESTIÓN DE FAVORITOS                                                 │
+└──────────────────────────────────────────────────────────────────────────┘
+
+4.1 Proceso: Agregar Producto a Favoritos
+    Archivo: lib/views/producto_view.dart, lib/services/favorito_service.dart
+    E: selección de producto                                         = 1 CFP
+    W: guardar favorito en tabla favoritos                           = 1 CFP
+    X: mensaje de confirmación                                       = 1 CFP
+    Total: 3 CFP
+
+4.2 Proceso: Eliminar Producto de Favoritos
+    Archivo: lib/views/favoritos_view.dart, lib/services/favorito_service.dart
+    E: selección de producto                                         = 1 CFP
+    W: eliminar favorito de tabla                                    = 1 CFP
+    X: actualizar lista                                              = 1 CFP
+    Total: 3 CFP
+
+4.3 Proceso: Ver Lista de Favoritos
+    Archivo: lib/views/favoritos_view.dart
+    R: leer favoritos del usuario                                    = 1 CFP
+    R: leer información de productos                                 = 1 CFP
+    R: leer precios actuales                                         = 1 CFP
+    X: mostrar lista de favoritos                                    = 1 CFP
+    Total: 4 CFP
+
+SUBTOTAL GESTIÓN DE FAVORITOS: 10 CFP
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 5. GESTIÓN DE ALERTAS DE PRECIOS                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+5.1 Proceso: Crear Alerta de Precio
+    Archivo: lib/views/comparador_view.dart, lib/services/alert_service.dart
+    E: selección de producto                                         = 1 CFP
+    E: tipo de alerta (sube/baja)                                    = 1 CFP
+    E: umbral de precio                                              = 1 CFP
+    W: guardar alerta en tabla alertas                               = 1 CFP
+    X: mensaje de confirmación                                       = 1 CFP
+    Total: 5 CFP
+
+5.2 Proceso: Ver Mis Alertas
+    Archivo: lib/views/alertas_view.dart
+    R: leer alertas del usuario                                      = 1 CFP
+    R: leer productos asociados                                      = 1 CFP
+    X: mostrar lista de alertas activas                              = 1 CFP
+    Total: 3 CFP
+
+5.3 Proceso: Eliminar Alerta
+    Archivo: lib/views/alertas_view.dart
+    E: selección de alerta                                           = 1 CFP
+    W: eliminar alerta de tabla                                      = 1 CFP
+    X: actualizar lista                                              = 1 CFP
+    Total: 3 CFP
+
+5.4 Proceso: Recepción de Notificación de Alerta
+    Archivo: lib/services/alert_service.dart (lógica backend)
+    R: verificar precios nuevos vs alertas                           = 1 CFP
+    W: marcar alerta como notificada                                 = 1 CFP
+    X: enviar notificación al usuario                                = 1 CFP
+    Total: 3 CFP
+
+SUBTOTAL GESTIÓN DE ALERTAS: 14 CFP
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 6. HISTORIAL DE CONSULTAS                                               │
+└──────────────────────────────────────────────────────────────────────────┘
+
+6.1 Proceso: Registrar Consulta en Historial
+    Archivo: lib/services/historial_service.dart
+    E: consulta de producto                                          = 1 CFP
+    W: guardar en historial local                                    = 1 CFP
+    Total: 2 CFP
+
+6.2 Proceso: Ver Historial de Consultas
+    Archivo: lib/views/historial_view.dart
+    R: leer historial del usuario                                    = 1 CFP
+    R: leer información de productos                                 = 1 CFP
+    X: mostrar lista con fechas                                      = 1 CFP
+    Total: 3 CFP
+
+6.3 Proceso: Limpiar Historial
+    Archivo: lib/views/historial_view.dart
+    E: confirmación de limpieza                                      = 1 CFP
+    W: eliminar historial                                            = 1 CFP
+    X: mensaje de confirmación                                       = 1 CFP
+    Total: 3 CFP
+
+SUBTOTAL HISTORIAL: 8 CFP
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 7. PANEL DE ADMINISTRACIÓN                                              │
+└──────────────────────────────────────────────────────────────────────────┘
+
+7.1 Proceso: Gestión de Productos (Admin)
+    Archivo: lib/views/admin/admin_productos_view.dart
+    E: nombre, categoría, unidad, imagen                             = 4 CFP
+    R: leer lista de productos                                       = 1 CFP
+    W: crear/actualizar/eliminar producto                            = 1 CFP
+    X: mostrar lista actualizada                                     = 1 CFP
+    Total: 7 CFP
+
+7.2 Proceso: Gestión de Mercados (Admin)
+    Archivo: lib/views/admin/admin_mercados_view.dart
+    E: nombre, zona, dirección, coordenadas, horarios                = 5 CFP
+    R: leer lista de mercados                                        = 1 CFP
+    W: crear/actualizar/eliminar mercado                             = 1 CFP
+    X: mostrar lista actualizada                                     = 1 CFP
+    Total: 8 CFP
+
+7.3 Proceso: Gestión de Categorías (Admin)
+    Archivo: lib/views/admin/admin_categorias_view.dart
+    E: nombre de categoría, icono                                    = 2 CFP
+    R: leer categorías existentes                                    = 1 CFP
+    W: crear/actualizar/eliminar categoría                           = 1 CFP
+    X: mostrar lista actualizada                                     = 1 CFP
+    Total: 5 CFP
+
+7.4 Proceso: Revisar y Aprobar Reportes de Precios (Admin)
+    Archivo: lib/views/admin/admin_reportes_view.dart
+    R: leer reportes pendientes                                      = 1 CFP
+    R: leer información de producto y mercado                        = 1 CFP
+    E: decisión (aprobar/rechazar)                                   = 1 CFP
+    W: actualizar estado del reporte                                 = 1 CFP
+    W: crear precio oficial si se aprueba                            = 1 CFP
+    X: actualizar lista de reportes                                  = 1 CFP
+    Total: 6 CFP
+
+7.5 Proceso: Gestión de Usuarios (Admin)
+    Archivo: lib/views/admin/admin_usuarios_view.dart
+    R: leer lista de usuarios                                        = 1 CFP
+    E: filtros (búsqueda, zona)                                      = 1 CFP
+    W: activar/desactivar usuario                                    = 1 CFP
+    X: mostrar lista de usuarios                                     = 1 CFP
+    Total: 4 CFP
+
+7.6 Proceso: Dashboard de Estadísticas (Admin)
+    Archivo: lib/views/admin/admin_panel_view.dart
+    R: leer total de usuarios                                        = 1 CFP
+    R: leer total de productos                                       = 1 CFP
+    R: leer total de reportes                                        = 1 CFP
+    R: leer precios recientes                                        = 1 CFP
+    X: mostrar estadísticas y gráficos                               = 1 CFP
+    Total: 5 CFP
+
+SUBTOTAL ADMINISTRACIÓN: 35 CFP
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 8. FUNCIONALIDADES ADICIONALES                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+8.1 Proceso: Navegación Principal (Home)
+    Archivo: lib/views/home_view.dart
+    R: cargar productos destacados                                   = 1 CFP
+    R: cargar categorías                                             = 1 CFP
+    X: mostrar interfaz principal                                    = 1 CFP
+    Total: 3 CFP
+
+8.2 Proceso: Búsqueda Global
+    Archivo: lib/views/producto_view.dart
+    E: término de búsqueda                                           = 1 CFP
+    R: buscar en productos                                           = 1 CFP
+    X: mostrar resultados                                            = 1 CFP
+    Total: 3 CFP
+
+8.3 Proceso: Acceso Multiplataforma (Web/Móvil)
+    Archivo: lib/main.dart, web/index.html, android/ios configs
+    E: detección de plataforma                                       = 1 CFP
+    R: cargar configuración específica                               = 1 CFP
+    X: renderizar interfaz adaptada                                  = 1 CFP
+    Total: 3 CFP
+
+SUBTOTAL FUNCIONALIDADES ADICIONALES: 9 CFP
+
+================================================================================
+RESUMEN TOTAL DE CFP
+================================================================================
+
+1. Gestión de Usuarios y Autenticación        = 29 CFP
+2. Gestión de Productos                        = 26 CFP
+3. Gestión de Precios y Reportes               = 16 CFP
+4. Gestión de Favoritos                        = 10 CFP
+5. Gestión de Alertas de Precios               = 14 CFP
+6. Historial de Consultas                      =  8 CFP
+7. Panel de Administración                     = 35 CFP
+8. Funcionalidades Adicionales                 =  9 CFP
+                                                -------
+TOTAL CFP DEL SISTEMA:                          147 CFP
+
+================================================================================
+CÁLCULO DE COSTOS
+================================================================================
+
+Método de cálculo: COSMIC Function Points
+
+Total de Puntos de Función (CFP): 147
+
+Costo por Punto de Función: $30 USD
+(Basado en estándares de la industria para desarrollo móvil/web con Flutter)
+
+COSTO TOTAL ESTIMADO = 147 CFP × $30 USD = $4,410 USD
+
+================================================================================
+DESGLOSE DE COSTOS POR MÓDULO
+================================================================================
+
+1. Gestión de Usuarios (29 CFP × $30)          = $870 USD
+2. Gestión de Productos (26 CFP × $30)         = $780 USD
+3. Gestión de Precios (16 CFP × $30)           = $480 USD
+4. Gestión de Favoritos (10 CFP × $30)         = $300 USD
+5. Gestión de Alertas (14 CFP × $30)           = $420 USD
+6. Historial (8 CFP × $30)                     = $240 USD
+7. Panel Admin (35 CFP × $30)                  = $1,050 USD
+8. Funcionalidades Extra (9 CFP × $30)         = $270 USD
+                                                ----------
+TOTAL:                                          $4,410 USD
+
+================================================================================
+FACTORES ADICIONALES A CONSIDERAR
+================================================================================
+
+Complejidad Técnica:
+✓ Flutter (multiplataforma web/móvil)
+✓ Supabase (backend como servicio)
+✓ Autenticación con JWT
+✓ Row Level Security (RLS)
+✓ Gráficos y visualizaciones
+✓ Geolocalización
+✓ Sistema de notificaciones
+
+Ajuste por Complejidad Técnica: +15% = $661.50 USD
+
+COSTO TOTAL AJUSTADO: $4,410 + $661.50 = $5,071.50 USD
+
+================================================================================
+CONCLUSIÓN
+================================================================================
+
+Costo Base (147 CFP):                           $4,410.00 USD
+Ajuste por Complejidad (+15%):                    $661.50 USD
+                                                ------------
+COSTO TOTAL FINAL DEL PROYECTO:                 $5,071.50 USD
+
+Nota: Este costo refleja únicamente el desarrollo del software. No incluye:
+- Infraestructura y hosting
+- Mantenimiento post-lanzamiento
+- Marketing y distribución
+- Soporte técnico continuo
+
+================================================================================
+Generado automáticamente el 02/11/2025
+Método: COSMIC CFP v4.0.2
+================================================================================
+

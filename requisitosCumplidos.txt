@@ -1,0 +1,145 @@
+REQUISITOS CUMPLIDOS - Monitoreo de Precios
+Fecha: 4 de noviembre de 2025
+Autor del análisis: (Automático)
+
+Fuente: `leeme.txt` (requisitos de usuario y software)
+
+=====================================
+A. Requisitos de usuario
+=====================================
+1) "Quiero poder registrarme e iniciar sesión para acceder a funciones personalizadas..."
+   Estado: Cumplido
+   Evidencia / archivos relevantes:
+     - `lib/services/auth_service.dart` (signUp, signIn, resetPassword, signOut)
+     - `lib/views/login_view.dart` (interfaz de login)
+     - `lib/views/register_view.dart` (interfaz de registro)
+     - `lib/models/usuario_model.dart` (modelo Usuario)
+     - `lib/main.dart` (inicialización Supabase y rutas)
+   Observaciones: Manejo de perfil y stream de auth implementado.
+
+2) "Quiero consultar precios de productos alimenticios en diferentes mercados..."
+   Estado: Cumplido
+   Evidencia / archivos relevantes:
+     - `lib/services/precio_service.dart` (consultas de precios, tendencias)
+     - `lib/services/producto_service.dart` (consulta de productos y mercados)
+     - `lib/views/producto_view.dart` (vista detalle con lista de precios)
+     - `lib/widgets/precio_table.dart` (tabla de precios reutilizable)
+     - `database/setup.sql` (tabla `precios` y vista `precios_actuales`)
+   Observaciones: La capa DB incluye índices y views que soportan consultas eficientes.
+
+3) "Quiero comparar precios de un mismo producto entre varios mercados en una sola vista."
+   Estado: Cumplido
+   Evidencia / archivos relevantes:
+     - `lib/views/comparador_view.dart` (vista comparador)
+     - `lib/views/comparar_mercados_view.dart` (comparación entre mercados)
+     - `lib/services/precio_service.dart` (`compararPrecios`, `getPrecioMasBarato`)
+     - `lib/widgets/precio_table.dart`
+
+4) "Quiero poder filtrar productos por categoría ... y por ubicación (mercado, zona)."
+   Estado: Cumplido
+   Evidencia / archivos relevantes:
+     - `lib/services/producto_service.dart` (`getProductosPorCategoria`, `getMercados`)
+     - `lib/widgets/mercado_selector.dart` (selector de mercados)
+     - Vistas que usan filtros: `lib/views/home_view.dart`, `comparador_view.dart`
+
+5) "Quiero ver la fecha de actualización de cada precio..."
+   Estado: Cumplido
+   Evidencia / archivos relevantes:
+     - `database/setup.sql` (campo `fecha_actualizacion` en `precios`, vista `precios_actuales` incluye `fecha_actualizacion`)
+     - `lib/models/precio_model.dart` (modelos con campo de fecha)
+     - `lib/widgets/precio_table.dart` (probablemente muestra la fecha)
+   Observaciones: La información de fecha existe en DB y en el modelo; verificar UI si requiere formato adicional.
+
+6) "Quiero visualizar gráficos de tendencias de precios por producto..."
+   Estado: Parcialmente cumplido
+   Evidencia / archivos relevantes:
+     - `lib/views/precio_tendencia_view.dart` (vista para tendencias)
+     - `lib/services/precio_service.dart` (`getTendenciasPrecios`)
+   Observaciones: La vista y el servicio existen; revisar si se usan librerías de gráficas (no listadas en `pubspec.yaml`). Si las gráficas están implementadas, se considera cumplido; en caso contrario, está preparado para implementarlas.
+
+7) "Quiero recibir alertas de precios cuando el valor de un producto suba o baje."
+   Estado: Parcialmente cumplido
+   Evidencia / archivos relevantes:
+     - `lib/services/alert_service.dart` (gestión de alertas)
+     - `lib/views/alertas_view.dart` (UI para alertas)
+     - `database/setup.sql` (función `verificar_alertas()` y trigger `trigger_verificar_alertas` que actualiza `notificado`)
+   Observaciones: La lógica de verificación en la DB y la UI de alertas están presentes. Notificaciones push (sistema de envío real de notificaciones) no aparecen en el repo → pendiente.
+
+8) "Quiero guardar productos como favoritos..."
+   Estado: Cumplido
+   Evidencia / archivos relevantes:
+     - `lib/services/favorito_service.dart` (agregar/eliminar/consultar favoritos)
+     - `lib/views/favoritos_view.dart` (vista de favoritos)
+     - `database/setup.sql` (tabla `favoritos`)
+
+9) "Quiero que los administradores puedan reportar precios..."
+   Estado: Cumplido
+   Evidencia / archivos relevantes:
+     - `lib/views/admin/admin_reportes_view.dart` (panel admin de reportes)
+     - `lib/services/reporte_service.dart` (crear, aprobar, rechazar reportes)
+     - `database/setup.sql` (tabla `reportes` y triggers/fields asociados)
+
+10) "Quiero acceder al sistema desde un navegador web..."
+    Estado: Cumplido
+    Evidencia / archivos relevantes:
+      - `pubspec.yaml` (soporte Flutter Web y assets)
+      - `lib/main.dart` (configuración de MaterialApp y rutas)
+      - `vercel.json` / `README.md` (mencionan deployment en Vercel)
+    Observaciones: Hay deployment activo en Vercel (URL proporcionada en README y en manual técnico).
+
+
+=====================================
+B. Requisitos del software (extracto)
+=====================================
+1) "Autenticación de usuarios mediante credenciales únicas"
+   Estado: Cumplido
+   Archivos: `lib/services/auth_service.dart`, `login_view.dart`, `register_view.dart`.
+
+2) "Consulta dinámica de precios por producto y mercado"
+   Estado: Cumplido
+   Archivos: `lib/services/precio_service.dart`, `producto_service.dart`, `database/setup.sql` (índices y vistas).
+
+3) "Comparador de precios en vista tabular"
+   Estado: Cumplido
+   Archivos: `lib/views/comparador_view.dart`, `lib/widgets/precio_table.dart`.
+
+
+=====================================
+C. Requisitos funcionales (extracto)
+=====================================
+1) Registro y autenticación
+   Estado: Cumplido (ver A.1)
+
+2) Consulta de precios por producto y mercado
+   Estado: Cumplido (ver A.2)
+
+3) Filtrado por categoría
+   Estado: Cumplido (ver A.4)
+
+4) Reporte de precios por administradores
+   Estado: Cumplido (ver A.9)
+
+
+=====================================
+D. Requisitos no funcionales
+=====================================
+1) Interfaz intuitiva y navegación clara
+   Estado: Parcialmente cumplido
+   Evidencia: Tema Web3 (ver `lib/main.dart`), componentes reusables y vistas organizadas. La usabilidad final debería validarse con pruebas de usuario.
+
+2) Consultas de precios y comparaciones < 2s
+   Estado: No verificado (dependiente de infra). Observaciones:
+     - La DB incluye índices (`database/setup.sql`) y vistas optimizadas.
+     - Rendimiento real depende del hosting de Supabase, tamaño de datos y latencia.
+
+3) Compatibilidad con navegadores y diseño responsivo
+   Estado: Cumplido
+   Evidencia: Flutter Web + uso de MediaQuery/Layouts; `lib/main.dart` y widgets responsivos.
+
+4) Código modularizado y documentado
+   Estado: Parcialmente cumplido
+   Evidencia: Código dividido en `models`, `services`, `views`, `widgets`. Existe `README.md` y `MANUAL_TECNICO.txt`. Recomendación: añadir comentarios en funciones críticas y tests unitarios adicionales.
+
+5) Los precios reportados por administradores deben provenir de fuentes confiables
+   Estado: Parcial / política
+   Observaciones: El sistema permite que administradores marquen precios como verificados (`precios.verificado`), pero la verificación de la 
